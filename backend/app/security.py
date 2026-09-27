@@ -22,6 +22,11 @@ from urllib.parse import urlsplit
 
 ALLOWED_SCHEMES = {"http", "https"}
 
+# Matches the practical limit most browsers and servers enforce. Rejecting
+# absurdly long input here is cheap; letting it through would otherwise
+# cost a full browser launch and navigation timeout for garbage.
+MAX_URL_LENGTH = 2048
+
 # Hostnames that resolve to "here" no matter what DNS says.
 BLOCKED_HOSTNAMES = {
     "localhost",
@@ -43,13 +48,19 @@ class SafeUrl:
 
 def _is_public_ip(ip_str: str) -> bool:
     ip = ipaddress.ip_address(ip_str)
-    if ip.is_private or ip.is_loopback or ip.is_link_local:
-        return False
-    if ip.is_multicast or ip.is_reserved or ip.is_unspecified:
-        return False
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
         return _is_public_ip(str(ip.ipv4_mapped))
-    return True
+    # is_global is the correct semantic check ("routable on the public
+    # internet"). is_private alone is not enough: it doesn't cover the
+    # 100.64.0.0/10 shared address space (RFC 6598 / CGNAT), which several
+    # cloud providers use for their instance-metadata endpoint (e.g.
+    # Alibaba Cloud's 100.100.100.200) — a real SSRF target that a
+    # private-ranges-only blocklist would miss. Multicast is excluded
+    # explicitly since is_global reports it as globally scoped even though
+    # it is never a legitimate scan target.
+    if ip.is_multicast or ip.is_reserved or ip.is_unspecified:
+        return False
+    return ip.is_global
 
 
 def resolve_hostname(hostname: str) -> tuple[str, ...]:
@@ -69,7 +80,11 @@ def validate_url(url: str, *, allow_private_networks: bool = False) -> SafeUrl:
     Set allow_private_networks only for local development against a
     localhost test fixture — never in a deployment reachable by others.
     """
-    parts = urlsplit(url.strip())
+    url = url.strip()
+    if len(url) > MAX_URL_LENGTH:
+        raise UnsafeUrlError(f"URL is too long (max {MAX_URL_LENGTH} characters)")
+
+    parts = urlsplit(url)
 
     if parts.scheme not in ALLOWED_SCHEMES:
         raise UnsafeUrlError("URL must start with http:// or https://")

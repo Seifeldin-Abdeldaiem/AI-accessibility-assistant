@@ -96,18 +96,30 @@ def build_report(
     )
 
 
+def _md_text(value: str) -> str:
+    """Escape a string for use in Markdown *prose* (never inside a fenced
+    code block). Findings quote text straight off the scanned page — its
+    alt text, its link text, its <title> — so a malicious page could plant
+    raw HTML (e.g. alt="<img src=x onerror=...>") hoping it survives into
+    an exported report that someone later opens in a Markdown renderer
+    with HTML passthrough enabled. Escaping <, >, and & here treats that
+    text as data, never as markup, the same guarantee Jinja2's autoescape
+    already gives the HTML/PDF report."""
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def render_markdown(report: ScanReport) -> str:
     lines: list[str] = []
-    lines.append(f"# Accessibility report: {report.page_title or report.url}")
+    lines.append(f"# Accessibility report: {_md_text(report.page_title or report.url)}")
     lines.append("")
-    lines.append(f"- **URL:** {report.url}")
+    lines.append(f"- **URL:** {_md_text(report.url)}")
     lines.append(f"- **Scanned:** {report.scanned_at}")
     lines.append(
         f"- **Summary:** {report.summary.critical} critical, {report.summary.serious} serious, "
         f"{report.summary.moderate} moderate, {report.summary.minor} minor"
     )
     lines.append("")
-    lines.append(f"> {report.tool_coverage_note}")
+    lines.append(f"> {_md_text(report.tool_coverage_note)}")
     lines.append("")
 
     if report.screenshot_png_base64:
@@ -120,12 +132,15 @@ def render_markdown(report: ScanReport) -> str:
     lines.append("")
     for idx, g in enumerate(report.groups, start=1):
         wcag = ", ".join(g.wcag_tags) if g.wcag_tags else "n/a"
-        lines.append(f"### {idx}. {g.impact.capitalize()} · {g.help_text} · WCAG {wcag} · {g.total_node_count} place(s)")
+        lines.append(
+            f"### {idx}. {g.impact.capitalize()} · {_md_text(g.help_text)} · WCAG {wcag} · "
+            f"{g.total_node_count} place(s)"
+        )
         lines.append("")
         if g.explanation:
-            lines.append(g.explanation)
+            lines.append(_md_text(g.explanation))
         elif g.explanation_error:
-            lines.append(f"_{g.explanation_error}_")
+            lines.append(f"_{_md_text(g.explanation_error)}_")
         lines.append("")
         if g.nodes:
             lines.append("```html")
@@ -139,14 +154,14 @@ def render_markdown(report: ScanReport) -> str:
             lines.append("```")
             if g.fix.note:
                 lines.append("")
-                lines.append(f"_{g.fix.note}_")
+                lines.append(f"_{_md_text(g.fix.note)}_")
             lines.append("")
             if g.fix_verified is True:
-                lines.append(f"✓ **Fix checked:** {g.fix_verification_note}")
+                lines.append(f"✓ **Fix checked:** {_md_text(g.fix_verification_note or '')}")
             elif g.fix_verified is False:
-                lines.append(f"✗ **Fix not verified:** {g.fix_verification_note}")
+                lines.append(f"✗ **Fix not verified:** {_md_text(g.fix_verification_note or '')}")
             elif g.fix_verification_note:
-                lines.append(f"_{g.fix_verification_note}_")
+                lines.append(f"_{_md_text(g.fix_verification_note)}_")
             lines.append("")
         lines.append(f"[Learn more about this rule]({g.help_url})")
         lines.append("")
@@ -160,9 +175,13 @@ def render_markdown(report: ScanReport) -> str:
         )
         lines.append("")
         for item in report.manual_review_items:
-            lines.append(f"- **{item.kind.replace('_', ' ')}** (`{item.selector}`): {item.reason}")
+            lines.append(
+                f"- **{item.kind.replace('_', ' ')}** (`{item.selector}`): {_md_text(item.reason)}"
+            )
             if item.suggestion:
-                lines.append(f"  - Suggested: \"{item.suggestion}\" _{item.suggestion_caveat}_")
+                lines.append(
+                    f'  - Suggested: "{_md_text(item.suggestion)}" _{_md_text(item.suggestion_caveat)}_'
+                )
         lines.append("")
 
     lines.append("---")
