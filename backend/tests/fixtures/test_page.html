@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fixture: known accessibility issues</title>
+<style>
+  body { font-family: sans-serif; margin: 2rem; }
+  .low-contrast { color: #aaaaaa; background: #ffffff; }
+  img { display: block; margin: 1rem 0; }
+</style>
+</head>
+<body>
+  <h1>Sample product page</h1>
+
+  <p class="low-contrast">This text fails color contrast checks on purpose.</p>
+
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzJkNmNkZiIvPjx0ZXh0IHg9IjMwIiB5PSI4MCIgZmlsbD0id2hpdGUiPkNhbXBpbmc8L3RleHQ+PC9zdmc+" width="150" height="150">
+
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2RmMmQ2YyIvPjwvc3ZnPg==" alt="IMG_4021.jpg" width="150" height="150">
+
+  <form>
+    <input type="email" placeholder="Email address">
+    <button type="submit"></button>
+  </form>
+
+  <p>Want to know more about our return policy? <a href="/returns">click here</a>.</p>
+
+  <div onclick="alert('hi')">Not a real button but looks clickable</div>
+</body>
+</html>

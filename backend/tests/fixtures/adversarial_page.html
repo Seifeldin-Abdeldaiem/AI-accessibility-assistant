@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fixture &lt;script&gt;window.__xss_title=1&lt;/script&gt; adversarial page</title>
+<style>
+  body { font-family: sans-serif; margin: 2rem; }
+  .offscreen { position: absolute; left: -9999px; top: 0; }
+</style>
+</head>
+<body>
+  <h1>Adversarial fixture</h1>
+
+  <!-- XSS payload in alt text: must be escaped, never executed, in every
+       report surface (HTML report, PDF render, Markdown, and the React
+       frontend which renders it straight into a string). -->
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzJkNmNkZiIvPjwvc3ZnPg=="
+       alt="&lt;img src=x onerror=window.__xss_alt=1&gt; IMG_9999.png" width="150" height="150">
+
+  <!-- XSS payload in link text -->
+  <p>See our policy: <a href="/policy">&lt;script&gt;window.__xss_link=1&lt;/script&gt; click here</a></p>
+
+  <!-- 30 identical missing-alt images: should collapse to ONE group with
+       total_node_count=30, capped display list, not 30 separate findings. -->
+  <div id="gallery">
+    <!-- injected below via loop -->
+  </div>
+
+  <!-- Off-screen (not display:none) unlabeled input: still exposed to
+       assistive tech, axe should still flag it, and it should still get
+       a bounding box even though it's off the visible viewport. -->
+  <input type="text" class="offscreen" placeholder="Promo code">
+
+  <!-- Deliberately malformed / unclosed markup: browsers auto-correct
+       this, the DOM Playwright sees should still be well-formed. -->
+  <div class="broken">
+    <p>Unclosed paragraph
+    <span>Unclosed span
+  </div>
+
+  <!-- Very long alt text: must not crash Pillow's textlength() or blow up
+       the markdown/pdf renderers. -->
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PC9zdmc+"
+       alt="">
+
+  <script>
+    const gallery = document.getElementById('gallery');
+    for (let i = 0; i < 30; i++) {
+      const img = document.createElement('img');
+      img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PC9zdmc+';
+      img.width = 40;
+      img.height = 40;
+      gallery.appendChild(img);
+    }
+  </script>
+</body>
+</html>
