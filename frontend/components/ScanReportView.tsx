@@ -1,5 +1,6 @@
 import type { ScanReport } from "@/lib/types";
 import { markdownExportUrl, pdfExportUrl } from "@/lib/api";
+import { FileOutIcon } from "./icons";
 import IssueCard from "./IssueCard";
 import ManualReviewSection from "./ManualReviewSection";
 
@@ -7,10 +8,8 @@ export default function ScanReportView({ report }: { report: ScanReport }) {
   const { summary } = report;
 
   return (
-    <section aria-labelledby="report-heading">
-      <h2 id="report-heading">
-        Results for {report.page_title || report.url}
-      </h2>
+    <section className="report-header" aria-labelledby="report-heading">
+      <h2 id="report-heading">Results for {report.page_title || report.url}</h2>
       <p className="issue-meta">
         <a href={report.url} target="_blank" rel="noreferrer">
           {report.url}
@@ -21,17 +20,21 @@ export default function ScanReportView({ report }: { report: ScanReport }) {
       <div className="coverage-note">{report.tool_coverage_note}</div>
 
       <div className="summary-row" aria-label="Issue counts by severity">
-        <span className="summary-pill" style={{ background: "var(--color-critical)" }}>
-          {summary.critical} critical
+        <span className="summary-stat" style={{ background: "var(--critical)" }}>
+          <span className="count">{summary.critical}</span>
+          <span className="label">Critical</span>
         </span>
-        <span className="summary-pill" style={{ background: "var(--color-serious)" }}>
-          {summary.serious} serious
+        <span className="summary-stat" style={{ background: "var(--serious)" }}>
+          <span className="count">{summary.serious}</span>
+          <span className="label">Serious</span>
         </span>
-        <span className="summary-pill" style={{ background: "var(--color-moderate)" }}>
-          {summary.moderate} moderate
+        <span className="summary-stat" style={{ background: "var(--moderate)" }}>
+          <span className="count">{summary.moderate}</span>
+          <span className="label">Moderate</span>
         </span>
-        <span className="summary-pill" style={{ background: "var(--color-minor)" }}>
-          {summary.minor} minor
+        <span className="summary-stat" style={{ background: "var(--minor)" }}>
+          <span className="count">{summary.minor}</span>
+          <span className="label">Minor</span>
         </span>
       </div>
 
@@ -46,9 +49,11 @@ export default function ScanReportView({ report }: { report: ScanReport }) {
 
       <div className="export-row">
         <a className="secondary" href={markdownExportUrl(report.id)} download>
+          <FileOutIcon size={16} />
           Export as Markdown
         </a>
         <a className="secondary" href={pdfExportUrl(report.id)} download>
+          <FileOutIcon size={16} />
           Export as PDF
         </a>
       </div>
@@ -65,7 +70,7 @@ export default function ScanReportView({ report }: { report: ScanReport }) {
 
       <ManualReviewSection items={report.manual_review_items} />
 
-      <p className="muted-note" style={{ marginTop: "1.5rem" }}>
+      <p className="muted-note ai-budget-note">
         AI review budget: {report.claude_calls_made} call(s) made
         {report.claude_calls_skipped_budget > 0
           ? `, ${report.claude_calls_skipped_budget} issue(s) skipped after the spend cap was reached.`

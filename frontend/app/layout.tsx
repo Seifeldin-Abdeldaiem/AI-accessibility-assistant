@@ -1,10 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { LogoMark } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "AI Accessibility Assistant",
   description:
     "Paste a URL and get plain-English accessibility findings with code fixes that are checked in a real browser before they're shown to you.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1120" },
+  ],
 };
 
 export default function RootLayout({
@@ -19,13 +27,16 @@ export default function RootLayout({
           Skip to main content
         </a>
         <header className="site-header">
-          <h1>AI Accessibility Assistant</h1>
-          <p className="tagline">
-            Paste a URL. Get plain-English accessibility findings and code fixes,
-            each checked in a real browser before you see it.
-          </p>
+          <div className="site-header-inner">
+            <span className="brand-mark">
+              <LogoMark />
+            </span>
+            <span className="brand-name">AI Accessibility Assistant</span>
+          </div>
         </header>
-        <main id="main-content">{children}</main>
+        <main id="main-content">
+          <div className="wrap">{children}</div>
+        </main>
         <footer className="app-footer">
           Automated checks only find a fraction of real accessibility issues.
           This tool does not certify a page as compliant — treat it as a

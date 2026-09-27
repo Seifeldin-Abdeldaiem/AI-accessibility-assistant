@@ -1,4 +1,5 @@
 import type { ViolationGroup } from "@/lib/types";
+import { CheckCircleIcon, XCircleIcon } from "./icons";
 
 const IMPACT_LABELS: Record<string, string> = {
   critical: "Critical",
@@ -18,7 +19,7 @@ export default function IssueCard({ group, index }: Props) {
   return (
     <li className="issue-card" data-impact={group.impact}>
       <div className="issue-heading">
-        <span className={`badge`} style={{ background: `var(--color-${group.impact})` }}>
+        <span className="badge" style={{ background: `var(--${group.impact})` }}>
           {IMPACT_LABELS[group.impact] ?? group.impact}
         </span>
         <p className="issue-title">
@@ -36,23 +37,29 @@ export default function IssueCard({ group, index }: Props) {
       )}
 
       {representative && (
-        <pre className="code-block">
+        <pre className="code-block" tabIndex={0} aria-label="Flagged HTML">
           <code>{representative.html}</code>
         </pre>
       )}
 
       {group.fix && (
         <>
-          <pre className="code-block">
+          <pre className="code-block" tabIndex={0} aria-label="Suggested fix, as a diff">
             <span className="diff-old">- {group.fix.old_html}</span>
             <span className="diff-new">+ {group.fix.new_html}</span>
           </pre>
           {group.fix.note && <p className="muted-note">{group.fix.note}</p>}
           {group.fix_verified === true && (
-            <p className="verify-line verify-yes">✓ Fix checked: {group.fix_verification_note}</p>
+            <p className="verify-line verify-yes">
+              <CheckCircleIcon />
+              Fix checked: {group.fix_verification_note}
+            </p>
           )}
           {group.fix_verified === false && (
-            <p className="verify-line verify-no">✗ Fix not verified: {group.fix_verification_note}</p>
+            <p className="verify-line verify-no">
+              <XCircleIcon />
+              Fix not verified: {group.fix_verification_note}
+            </p>
           )}
           {group.fix_verified === null && group.fix_verification_note && (
             <p className="muted-note">{group.fix_verification_note}</p>
