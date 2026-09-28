@@ -67,11 +67,17 @@ class BudgetExceededError(RuntimeError):
 
 
 class ClaudeClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, api_key_override: str | None = None):
+        """api_key_override lets a caller bring their own Anthropic key for a
+        single scan (BYOK). It takes priority over the server's own
+        ANTHROPIC_API_KEY, if any, so the server never has to pay for a
+        scan someone else's key is covering. Never logged, never stored
+        anywhere beyond this in-memory client for the life of one scan."""
         self.settings = settings
         self._client: anthropic.AsyncAnthropic | None = None
-        if settings.anthropic_api_key:
-            self._client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        key = api_key_override or settings.anthropic_api_key
+        if key:
+            self._client = anthropic.AsyncAnthropic(api_key=key)
         self.estimated_spend_usd = 0.0
         self.calls_made = 0
         self.calls_skipped_budget = 0
@@ -93,8 +99,8 @@ class ClaudeClient:
     async def explain_and_fix(self, group: ViolationGroup) -> ViolationGroup:
         if not self.available:
             group.explanation_error = (
-                "AI explanation unavailable: ANTHROPIC_API_KEY is not configured "
-                "on the server. The automated finding above is still valid."
+                "AI explanation unavailable: no Anthropic API key was provided "
+                "for this scan. The automated finding above is still valid."
             )
             return group
 

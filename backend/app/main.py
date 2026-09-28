@@ -5,7 +5,7 @@ import logging
 import uuid
 from collections import OrderedDict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
@@ -14,6 +14,7 @@ from .config import get_settings
 from .grouping import build_violation_groups
 from .manual_review import find_manual_review_items
 from .models import ScanReport, ScanRequest
+from .rate_limit import check_and_record, client_ip
 from .report import build_report, render_html, render_markdown, render_pdf
 from .scanner import ScanBlockedError, scan_session
 from .security import UnsafeUrlError, validate_url
@@ -56,14 +57,24 @@ async def health() -> dict:
 
 
 @app.post("/api/scan", response_model=ScanReport)
-async def create_scan(req: ScanRequest) -> ScanReport:
+async def create_scan(req: ScanRequest, request: Request) -> ScanReport:
+    ip = client_ip(request)
+    if not check_and_record(ip, limit_per_hour=settings.max_scans_per_ip_per_hour):
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Rate limit reached: this IP has run {settings.max_scans_per_ip_per_hour} "
+                "scans in the last hour. Please try again later."
+            ),
+        )
+
     try:
         safe_url = validate_url(req.url, allow_private_networks=settings.allow_private_networks)
     except UnsafeUrlError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
 
     scan_id = uuid.uuid4().hex[:12]
-    claude = ClaudeClient(settings)
+    claude = ClaudeClient(settings, api_key_override=req.anthropic_api_key)
 
     async with _scan_semaphore:
         try:
