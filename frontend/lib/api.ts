@@ -5,11 +5,14 @@ export const API_BASE_URL =
 
 export class ApiRequestError extends Error {}
 
-export async function runScan(url: string): Promise<ScanReport> {
+export async function runScan(url: string, anthropicApiKey?: string): Promise<ScanReport> {
   const res = await fetch(`${API_BASE_URL}/api/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({
+      url,
+      anthropic_api_key: anthropicApiKey?.trim() || undefined,
+    }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);

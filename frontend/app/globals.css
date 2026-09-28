@@ -268,6 +268,41 @@ header.site-header {
   color: var(--text);
 }
 
+.byok-details {
+  margin-top: 1rem;
+}
+
+.byok-details summary {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--accent-text);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.byok-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  max-width: 360px;
+}
+
+.byok-field label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.byok-field input[type="password"] {
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 button.primary {
   background: var(--accent);
   color: var(--accent-contrast);

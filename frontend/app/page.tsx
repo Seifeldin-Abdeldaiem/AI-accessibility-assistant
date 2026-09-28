@@ -15,12 +15,12 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  async function handleScan(url: string) {
+  async function handleScan(url: string, anthropicApiKey?: string) {
     setIsLoading(true);
     setError(null);
     setReport(null);
     try {
-      const result = await runScan(url);
+      const result = await runScan(url, anthropicApiKey);
       setReport(result);
       // Move focus to the results so keyboard/screen reader users land
       // where the new content actually is, instead of staying on the form.

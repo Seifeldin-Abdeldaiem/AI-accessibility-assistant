@@ -1,0 +1,45 @@
+# Render Blueprint (render.yaml spec) for deploying both services from one
+# repo. This has NOT been run against a live Render account from this
+# environment — no deployment credentials or outbound access to Render
+# were available here (see DEPLOYMENT.md for why). Treat it as a
+# verified-by-inspection starting point: check it against Render's current
+# Blueprint docs before your first deploy, since the YAML schema does
+# change between Render's releases.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> point at this repo.
+# After the first deploy, copy each service's actual public URL into the
+# other service's env vars below (CORS_ORIGINS and
+# NEXT_PUBLIC_API_BASE_URL) and redeploy — cross-service URL references
+# aren't set automatically here because Render's env-linking syntax for
+# a service's *public* hostname (as opposed to its private network
+# address) wasn't something this environment could verify live.
+services:
+  - type: web
+    name: accessibility-backend
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    # Headless Chromium needs real memory headroom; Render's smallest
+    # "free"/"starter" tiers are usually too tight for even one concurrent
+    # scan. Size this to your traffic, not to the cheapest option.
+    plan: standard
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGINS
+        value: "https://REPLACE-WITH-YOUR-FRONTEND-URL.onrender.com"
+      # Never set this to "true" in a deployment reachable from the
+      # internet — it disables the SSRF protection. Left unset here on
+      # purpose; the app already defaults it to false.
+      - key: ANTHROPIC_API_KEY
+        sync: false # optional: only if you want to pay for everyone's AI
+        # calls yourself instead of relying on visitors' bring-your-own-key
+
+  - type: web
+    name: accessibility-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start -- --port $PORT
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: "https://REPLACE-WITH-YOUR-BACKEND-URL.onrender.com"

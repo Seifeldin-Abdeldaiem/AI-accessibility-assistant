@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     scan_timeout_seconds: int = 45
     max_concurrent_scans: int = 2
     max_stored_reports: int = 50
+    max_scans_per_ip_per_hour: int = 10
     max_violation_nodes_per_rule: int = 25
     max_groups_explained_by_claude: int = 20
 

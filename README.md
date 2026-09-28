@@ -59,13 +59,18 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium   # skip if you're pointing PLAYWRIGHT_BROWSERS_PATH
                                # at an already-installed Chromium
-cp .env.example .env          # then set ANTHROPIC_API_KEY
+cp .env.example .env          # ANTHROPIC_API_KEY is optional — see below
 uvicorn app.main:app --reload --port 8000
 ```
 
-Without `ANTHROPIC_API_KEY` set, the server still runs and reports every
-automated finding — it just can't explain or fix them, and says so in the
-report instead of failing.
+**You don't need to set `ANTHROPIC_API_KEY` at all.** The app supports
+bring-your-own-key (BYOK): each visitor can optionally paste their own
+Anthropic key into the scan form, used only for that one scan and never
+stored server-side. Without any key — server-side or BYOK — the server
+still runs and reports every automated finding; it just can't explain or
+fix them, and says so in the report instead of failing. Setting
+`ANTHROPIC_API_KEY` on the server is only for a self-hosted deployment
+where you're deliberately paying for every visitor's AI usage yourself.
 
 ### Frontend
 
@@ -123,6 +128,14 @@ deployment reachable by anyone else.**
   in `backend/app/manual_review.py`.
 - Fix verification mutates and reverts a copy of the live DOM in the
   browser tab used for scanning; it doesn't touch your actual site.
+- Rate limiting (`backend/app/rate_limit.py`) and the in-memory report
+  store are per-process — fine for one instance, not for multiple; see
+  `DEPLOYMENT.md` for what that means before scaling out.
+
+## Deploying this publicly
+
+See `DEPLOYMENT.md` for a from-scratch deployment guide, including a
+`Dockerfile` and a Render Blueprint (`render.yaml`).
 
 ## Roadmap
 

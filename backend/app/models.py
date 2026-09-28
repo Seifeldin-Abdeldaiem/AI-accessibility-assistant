@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field
 
 class ScanRequest(BaseModel):
     url: str
+    # Bring-your-own-key: used only for this one scan's Claude calls, never
+    # logged, never written to the stored ScanReport, never echoed back in
+    # any response. Falls back to the server's own key (if any) when unset.
+    anthropic_api_key: str | None = Field(default=None, repr=False)
 
 
 class ViolationNode(BaseModel):
