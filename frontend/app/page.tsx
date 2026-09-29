@@ -6,6 +6,8 @@ import ScanForm, { API_KEY_INPUT_ID, BYOK_DETAILS_ID, URL_INPUT_ID } from "@/com
 import ScanProgress from "@/components/ScanProgress";
 import ScanReportView from "@/components/ScanReportView";
 import DemoExample from "@/components/DemoExample";
+import HearTheDifference from "@/components/HearTheDifference";
+import LockedOut from "@/components/LockedOut";
 import HowItWorks from "@/components/HowItWorks";
 import WhySection from "@/components/WhySection";
 import { AlertIcon } from "@/components/icons";
@@ -79,6 +81,8 @@ export default function HomePage() {
         />
       )}
 
+      <HearTheDifference />
+      <LockedOut />
       {!report && !isLoading && <DemoExample />}
       <HowItWorks />
       <WhySection />

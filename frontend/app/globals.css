@@ -1,5 +1,5 @@
 /* =====================================================================
-   Curbcut design system
+   Unkerb design system
    Ink on warm paper, with one signal colour: kerb-paint yellow.
    Every text/background pair here is checked against WCAG 2.2 AA
    (4.5:1 text, 3:1 UI boundaries) in light and dark mode — an
@@ -395,7 +395,7 @@ a:hover {
 
 .hero h1 {
   text-wrap: balance;
-  font-size: clamp(2.35rem, 5.2vw, 3.9rem);
+  font-size: clamp(2.3rem, 4.8vw, 3.5rem);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1.02;
@@ -1081,6 +1081,7 @@ li[data-state="active"] .step-dot {
 }
 
 .section-head h2 {
+  text-wrap: balance;
   font-size: clamp(1.8rem, 3.4vw, 2.5rem);
   margin-bottom: 0.7rem;
 }
@@ -1170,7 +1171,355 @@ li[data-state="active"] .step-dot {
   }
 }
 
-/* Why Curbcut */
+/* ---------------------------------------------------------------------
+   Hear the difference (screen reader demo)
+   ------------------------------------------------------------------ */
+.hear-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.hear-fallback {
+  margin: 0;
+  font-size: 0.9rem;
+  flex-basis: 100%;
+}
+
+.hear-fallback:empty {
+  display: none;
+}
+
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.seg button {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.seg button:not([aria-pressed="true"]):hover {
+  background: var(--paper-2);
+}
+
+.hear-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.hear-panel {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-lg);
+  padding: 1.3rem;
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+/* Fixed dark "terminal" in both themes so it reads as the audio side. */
+.hear-panel-dark {
+  background: #16150f;
+  color: #fbf8f1;
+  border-color: #16150f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hear-panel-dark {
+    border-color: #ffc91f;
+  }
+}
+
+.hear-panel-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.hear-panel-dark .hear-panel-title {
+  color: #c9c3b3;
+}
+
+.transcript {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.transcript li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid transparent;
+  background: rgba(251, 248, 241, 0.05);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.transcript li[data-speaking] {
+  background: rgba(255, 201, 31, 0.16);
+  border-left-color: #ffc91f;
+}
+
+.pin-static {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffc91f;
+  color: #16150f;
+  border: 2px solid #16150f;
+  font-weight: 800;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+}
+
+.transcript-text {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.transcript-said {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: #fbf8f1;
+}
+
+.transcript-problem {
+  font-size: 0.88rem;
+  color: #ffaaa0;
+  font-weight: 700;
+}
+
+.transcript-fix {
+  font-size: 0.88rem;
+  color: #9fe6b0;
+  font-weight: 700;
+}
+
+.hear-caption {
+  margin-top: 1.2rem;
+  max-width: 50rem;
+  color: var(--ink-2);
+}
+
+.hear-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* The mock shop page (decorative) */
+.shop {
+  display: grid;
+  gap: 1rem;
+}
+
+.shop-product {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.shop-img {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #9ec5ff 0%, #5b8de0 55%, #2f5fb3 100%);
+  overflow: visible;
+}
+
+.shop-img::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 14%;
+  height: 42%;
+  background: #ffc91f;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  opacity: 0.95;
+}
+
+.shop-info {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+
+.shop-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.shop-price {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
+.shop-buy {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.shop-buy.has-text {
+  padding-right: 1rem;
+}
+
+.shop-signup {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.shop-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.shop-input {
+  position: relative;
+  display: block;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  color: var(--muted);
+  background: var(--paper);
+}
+
+.shop-link {
+  font-size: 0.95rem;
+  color: var(--ink-2);
+}
+
+.shop-a {
+  position: relative;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+
+.shop .pin {
+  top: -11px;
+  left: -11px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.72rem;
+}
+
+.shop-a .pin {
+  left: auto;
+  right: -26px;
+  top: -6px;
+}
+
+/* Right-hand corner so the pin never covers the label that appears
+   above the field in the "after" state. */
+.shop-input .pin {
+  left: auto;
+  right: -11px;
+}
+
+@media (max-width: 820px) {
+  .hear-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Who gets locked out */
+.locked-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.locked-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.locked-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--signal-soft);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.3rem;
+}
+
+.locked-card h3 {
+  font-size: 1.12rem;
+}
+
+.locked-card p {
+  color: var(--ink-2);
+  font-size: 0.97rem;
+}
+
+@media (max-width: 900px) {
+  .locked-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .locked-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Why Unkerb */
 .why-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);

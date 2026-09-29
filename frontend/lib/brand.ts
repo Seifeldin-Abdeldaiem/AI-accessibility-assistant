@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: "Curbcut",
-  tagline: "Find what's stopping people from using your site — and how to fix it.",
+  name: "Unkerb",
+  tagline: "Can disabled people use your website? Find out in 30 seconds.",
   repoUrl: "https://github.com/Seifeldin-Abdeldaiem/AI-accessibility-assistant",
 };

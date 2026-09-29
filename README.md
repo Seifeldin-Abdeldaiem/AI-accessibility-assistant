@@ -1,12 +1,13 @@
-# Curbcut — AI accessibility assistant
+# Unkerb — can disabled people use your website?
 
-Paste a URL. Get plain-English accessibility findings and code fixes for
-your own page, each one checked in a real browser before it's shown to you.
+Paste a URL. In about 30 seconds, get plain-English findings on what stops
+blind, deaf, low-vision and keyboard-only people using your page, and the
+code change that fixes each one.
 
-Named after the curb-cut effect: ramps built for wheelchair users end up
-helping everyone with a pushchair or a suitcase, and accessible websites
-work the same way. The brand name lives in `frontend/lib/brand.ts` and
-`BRAND_NAME` in `backend/app/report.py` if you want to change it.
+A kerb is a small step: nothing to most people, a wall to a wheelchair
+user. Websites are full of small steps like that, and Unkerb finds them.
+The brand name lives in `frontend/lib/brand.ts` and `BRAND_NAME` in
+`backend/app/report.py` if you want to change it.
 
 This is a v1: one URL at a time, no sign-in. It reports what an automated
 scanner can find — it does not, and will not, claim a page is "compliant."

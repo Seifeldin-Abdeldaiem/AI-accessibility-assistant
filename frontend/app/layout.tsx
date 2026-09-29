@@ -7,9 +7,8 @@ import Logo from "@/components/Logo";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `${BRAND.name} — accessibility checks with fixes that work`,
-  description:
-    "Paste a URL. Curbcut finds what stops disabled people using your page, explains it in plain English, and shows the code change that fixes it.",
+  title: `${BRAND.name} — can disabled people use your website?`,
+  description: `Paste a URL. In about 30 seconds ${BRAND.name} shows what stops blind, deaf, low-vision and keyboard-only people using your page, and the code change that fixes it.`,
 };
 
 export const viewport: Viewport = {
@@ -32,8 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Logo />
             </a>
             <nav aria-label="Primary" className="site-nav">
+              <a href="#hear">Hear the difference</a>
               <a href="#how">How it works</a>
-              <a href="#why">Why {BRAND.name}</a>
               <a href="#scan" className="nav-cta">
                 Scan a page
               </a>
@@ -48,8 +47,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="footer-brand">
               <Logo size={26} />
               <p>
-                Accessibility fixes help everyone — like the curb cut. {BRAND.name} finds what
-                automated checks can catch and is honest about what they can&apos;t.
+                {BRAND.name} finds the small steps on your website that stop disabled people
+                getting in — and shows how to level them. Honest about what automated checks
+                can&apos;t catch.
               </p>
             </div>
             <div className="footer-cols">
