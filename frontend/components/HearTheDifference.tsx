@@ -38,6 +38,38 @@ const LINES = [
   },
 ];
 
+// A calm, conversational pace for people hearing a screen reader for the
+// first time. (Many everyday screen reader users listen far faster.)
+const SPEECH_RATE = 0.88;
+// Breathing room between announcements, like moving from one element to
+// the next with the keyboard.
+const PAUSE_BETWEEN_LINES_MS = 750;
+
+// Most browsers ship a robotic default voice and better ones alongside it;
+// prefer the natural-sounding English voices when they're installed.
+const PREFERRED_VOICES = [
+  /natural/i,
+  /neural/i,
+  /premium/i,
+  /enhanced/i,
+  /google uk english female/i,
+  /google uk english male/i,
+  /google us english/i,
+  /\b(serena|daniel|kate|samantha|karen|moira|tessa|libby|sonia|ryan)\b/i,
+];
+
+function pickVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const english = voices.filter((v) => /^en([-_]|$)/i.test(v.lang));
+  const pool = english.length ? english : voices;
+  for (const pattern of PREFERRED_VOICES) {
+    const match = pool.find((v) => pattern.test(v.name));
+    if (match) return match;
+  }
+  return (
+    pool.find((v) => /^en[-_]GB/i.test(v.lang)) ?? pool.find((v) => v.default) ?? pool[0] ?? null
+  );
+}
+
 function CartGlyph() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -61,22 +93,26 @@ function ShopMock({ mode }: { mode: Mode }) {
           <p className="shop-price">£129</p>
           <span className={`shop-buy${after ? " has-text" : ""}`}>
             <CartGlyph />
-            {after && "Add to cart"}
+            {after && <span className="soft-in">Add to cart</span>}
             <span className="pin">2</span>
           </span>
         </div>
       </div>
       <div className="shop-signup">
-        {after && <span className="shop-label">Email address</span>}
+        {after && <span className="shop-label soft-in">Email address</span>}
         <span className="shop-input">
-          {after ? "you@example.com" : "Email address"}
+          <span className="soft-in" key={mode}>
+            {after ? "you@example.com" : "Email address"}
+          </span>
           <span className="pin">3</span>
         </span>
       </div>
       <p className="shop-link">
         Changed your mind?{" "}
         <span className="shop-a">
-          {after ? "Read our returns policy" : "click here"}
+          <span className="soft-in" key={mode}>
+            {after ? "Read our returns policy" : "click here"}
+          </span>
           <span className="pin">4</span>
         </span>
       </p>
@@ -90,19 +126,36 @@ export default function HearTheDifference() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [canSpeak, setCanSpeak] = useState(false);
   const [speechFailed, setSpeechFailed] = useState(false);
-  // Guards against late onstart events from a cancelled run.
+  // Guards against late events from a cancelled run.
   const runId = useRef(0);
+  const voice = useRef<SpeechSynthesisVoice | null>(null);
+  const pauseTimer = useRef<number | undefined>(undefined);
+  // Chrome can drop events for an utterance that's been garbage-collected
+  // mid-sentence; holding a reference keeps onend firing.
+  const current = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
-    setCanSpeak(typeof window !== "undefined" && "speechSynthesis" in window);
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    setCanSpeak(true);
+    const synth = window.speechSynthesis;
+    // Voices often load asynchronously, after the first render.
+    const loadVoices = () => {
+      voice.current = pickVoice(synth.getVoices());
+    };
+    loadVoices();
+    synth.addEventListener("voiceschanged", loadVoices);
     return () => {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      synth.removeEventListener("voiceschanged", loadVoices);
+      window.clearTimeout(pauseTimer.current);
+      synth.cancel();
     };
   }, []);
 
   function stop() {
     runId.current += 1;
+    window.clearTimeout(pauseTimer.current);
     window.speechSynthesis.cancel();
+    current.current = null;
     setSpeaking(null);
     setIsPlaying(false);
   }
@@ -124,14 +177,31 @@ export default function HearTheDifference() {
       if (e.error !== "canceled" && e.error !== "interrupted") setSpeechFailed(true);
       finish();
     };
-    LINES.forEach((line, i) => {
-      const u = new SpeechSynthesisUtterance(line[mode]);
-      u.rate = 1.15;
+    // One line at a time, with a pause between, rather than queueing all
+    // four back to back.
+    const speakLine = (i: number) => {
+      if (runId.current !== run) return;
+      if (i >= LINES.length) {
+        finish();
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(LINES[i][mode]);
+      u.rate = SPEECH_RATE;
+      u.pitch = 1;
+      if (voice.current) {
+        u.voice = voice.current;
+        u.lang = voice.current.lang;
+      }
       u.onstart = () => runId.current === run && setSpeaking(i);
+      u.onend = () => {
+        if (runId.current !== run) return;
+        pauseTimer.current = window.setTimeout(() => speakLine(i + 1), PAUSE_BETWEEN_LINES_MS);
+      };
       u.onerror = fail;
-      if (i === LINES.length - 1) u.onend = finish;
+      current.current = u;
       window.speechSynthesis.speak(u);
-    });
+    };
+    speakLine(0);
   }
 
   function switchTo(next: Mode) {
@@ -155,7 +225,7 @@ export default function HearTheDifference() {
         </div>
 
         <div className="hear-controls">
-          <div className="seg" role="group" aria-label="Which version of the page">
+          <div className="seg" role="group" aria-label="Which version of the page" data-active={mode}>
             <button type="button" aria-pressed={mode === "before"} onClick={() => switchTo("before")}>
               Before fixes
             </button>
@@ -193,11 +263,17 @@ export default function HearTheDifference() {
                     {line.pin}
                   </span>
                   <span className="transcript-text">
-                    <span className="transcript-said">&ldquo;{line[mode]}&rdquo;</span>
+                    <span className="transcript-said soft-in" key={`said-${mode}`}>
+                      &ldquo;{line[mode]}&rdquo;
+                    </span>
                     {mode === "after" ? (
-                      <span className="transcript-fix">✓ {line.fix}</span>
+                      <span className="transcript-fix soft-in" key="fix">
+                        ✓ {line.fix}
+                      </span>
                     ) : (
-                      <span className="transcript-problem">{line.problem}</span>
+                      <span className="transcript-problem soft-in" key="problem">
+                        {line.problem}
+                      </span>
                     )}
                   </span>
                 </li>

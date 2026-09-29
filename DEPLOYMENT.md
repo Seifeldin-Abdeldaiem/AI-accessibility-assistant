@@ -24,6 +24,31 @@ with the built-in plain-English guidance.
 
 After that, every merge to `main` redeploys automatically.
 
+### Your own address (unkerb.co.uk)
+
+The domain can only be attached once the Render service exists, but you
+can buy it at any time to hold the name. No code changes are needed: the
+site calls its own API on whatever address it is served from.
+
+1. **Buy `unkerb.co.uk`** at any UK registrar (Cloudflare, Namecheap,
+   123-reg, …). It is usually under £10 a year.
+2. **Deploy** as above, then open the `unkerb` service in Render →
+   **Settings → Custom Domains** → add both `unkerb.co.uk` and
+   `www.unkerb.co.uk`.
+3. **Add the DNS records Render shows you** at your registrar. Copy them
+   from Render's screen, since they are the source of truth. Typically:
+   - `unkerb.co.uk`: an `A` record pointing to Render's IP address. Some
+     registrars offer `ALIAS`/`ANAME` records instead; use one pointing to
+     `unkerb.onrender.com` if so.
+   - `www.unkerb.co.uk`: a `CNAME` pointing to `unkerb.onrender.com`
+     (or whatever `.onrender.com` address your service got).
+   - If your registrar has **CAA** records set, allow Let's Encrypt and
+     Google Trust Services, or HTTPS certificates can't be issued.
+4. **Wait for Render to verify** the domain (click *Verify* if it doesn't
+   happen on its own). DNS changes can take minutes to a few hours. Render
+   then issues the HTTPS certificate automatically, and the
+   `.onrender.com` address keeps working too.
+
 ### What the free plan means
 
 - **$0**, 512 MB memory. The image is tested at exactly that limit (see

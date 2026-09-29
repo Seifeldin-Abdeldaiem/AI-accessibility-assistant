@@ -7,6 +7,13 @@
    ================================================================== */
 
 :root {
+  /* Motion: soft, unhurried easing for every interaction. Turned off
+     entirely for people who ask their system to reduce motion. */
+  --ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  --dur-hover: 260ms;
+  --dur-press: 340ms;
+  --dur-move: 480ms;
+
   --paper: #fbf8f1;
   --paper-2: #f4efe3;
   --surface: #ffffff;
@@ -130,6 +137,12 @@ a {
   text-decoration-color: var(--line-strong);
 }
 
+a {
+  transition:
+    color var(--dur-hover) var(--ease-soft),
+    text-decoration-color var(--dur-hover) var(--ease-soft);
+}
+
 a:hover {
   text-decoration-color: var(--ink);
 }
@@ -210,7 +223,13 @@ a:hover {
   border: 2px solid var(--ink);
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  transition:
+    transform var(--dur-press) var(--ease-soft),
+    box-shadow var(--dur-press) var(--ease-soft),
+    background-color var(--dur-hover) var(--ease-soft),
+    border-color var(--dur-hover) var(--ease-soft),
+    color var(--dur-hover) var(--ease-soft),
+    opacity var(--dur-hover) var(--ease-soft);
   white-space: nowrap;
 }
 
@@ -227,8 +246,8 @@ a:hover {
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--on-signal);
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 var(--on-signal);
 }
 
 .btn-primary:disabled {
@@ -245,6 +264,10 @@ a:hover {
 .btn-ghost:hover {
   border-color: var(--ink);
   background: var(--paper-2);
+}
+
+.btn-ghost:active {
+  transform: translateY(1px);
 }
 
 .btn-sm {
@@ -264,6 +287,7 @@ a:hover {
   text-underline-offset: 3px;
   text-decoration-color: var(--line-strong);
   cursor: pointer;
+  transition: text-decoration-color var(--dur-hover) var(--ease-soft);
 }
 
 .link-button:hover {
@@ -313,14 +337,17 @@ a:hover {
 
 .site-nav a {
   font-weight: 600;
-  text-decoration: none;
-  font-size: 0.98rem;
-}
-
-.site-nav a:not(.nav-cta):hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
+  text-decoration-color: transparent;
+  font-size: 0.98rem;
+  transition:
+    text-decoration-color var(--dur-hover) var(--ease-soft),
+    background-color var(--dur-hover) var(--ease-soft);
+}
+
+.site-nav a:not(.nav-cta):hover {
   text-decoration-color: var(--signal);
 }
 
@@ -329,6 +356,7 @@ a:hover {
   color: var(--paper);
   padding: 0.55rem 1rem;
   border-radius: 999px;
+  text-decoration: none;
 }
 
 .site-nav .nav-cta:hover {
@@ -477,7 +505,7 @@ a:hover {
   border: 2px solid var(--line-strong);
   border-radius: 999px;
   padding: 0.35rem;
-  transition: border-color 0.12s ease;
+  transition: border-color var(--dur-hover) var(--ease-soft);
 }
 
 .command-bar:focus-within {
@@ -541,7 +569,7 @@ a:hover {
 }
 
 .byok summary .chev {
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-move) var(--ease-soft);
 }
 
 .byok[open] summary .chev {
@@ -1192,13 +1220,34 @@ li[data-state="active"] .step-dot {
   display: none;
 }
 
+/* Two equal halves with one dark thumb that glides between them. */
 .seg {
-  display: inline-flex;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
   padding: 4px;
   gap: 4px;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
+  isolation: isolate;
+}
+
+.seg::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: var(--ink);
+  transition: transform var(--dur-move) var(--ease-soft);
+}
+
+.seg[data-active="after"]::before {
+  transform: translateX(calc(100% + 4px));
 }
 
 .seg button {
@@ -1211,15 +1260,34 @@ li[data-state="active"] .step-dot {
   background: transparent;
   color: var(--ink);
   cursor: pointer;
+  transition:
+    color var(--dur-move) var(--ease-soft),
+    background-color var(--dur-hover) var(--ease-soft);
 }
 
 .seg button[aria-pressed="true"] {
-  background: var(--ink);
   color: var(--paper);
 }
 
 .seg button:not([aria-pressed="true"]):hover {
   background: var(--paper-2);
+}
+
+/* Content that changes when the demo switches version fades in gently
+   instead of snapping. */
+.soft-in {
+  animation: soft-in var(--dur-move) var(--ease-soft) both;
+}
+
+@keyframes soft-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .hear-grid {
@@ -1279,7 +1347,9 @@ li[data-state="active"] .step-dot {
   border-radius: var(--radius-sm);
   border-left: 4px solid transparent;
   background: rgba(251, 248, 241, 0.05);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color var(--dur-move) var(--ease-soft),
+    border-color var(--dur-move) var(--ease-soft);
 }
 
 .transcript li[data-speaking] {
@@ -1670,7 +1740,7 @@ li[data-state="active"] .step-dot {
 
 .issue-chev {
   color: var(--muted);
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-move) var(--ease-soft);
 }
 
 .issue > details[open] .issue-chev {
