@@ -1,7 +1,7 @@
 import { BRAND } from "@/lib/brand";
 
 function RampArt() {
-  // A kerb in profile with a curb cut, yellow tactile paving and a wheel on
+  // A kerb in profile with a dropped kerb, yellow tactile paving and a wheel on
   // its way up. Decorative.
   return (
     <svg className="ramp-art" viewBox="0 0 400 270" aria-hidden="true" focusable="false">
@@ -43,19 +43,20 @@ export default function WhySection() {
           <div>
             <p className="eyebrow">
               <span className="eyebrow-dot" aria-hidden="true" />
-              The curb-cut effect
+              Why &ldquo;{BRAND.name}&rdquo;
             </p>
             <h2 id="why-heading" className="visually-hidden">
               Why {BRAND.name}
             </h2>
             <p className="why-quote">
-              Curb cuts were won by disabled activists. Now everyone with a pushchair, a suitcase
-              or a delivery trolley uses them. <mark>Accessible websites work the same way.</mark>
+              A kerb is a small step. For most people it&apos;s nothing — for a wheelchair user
+              it&apos;s a wall. Websites are full of small steps like that.{" "}
+              <mark>{BRAND.name} finds them and shows you how to level them.</mark>
             </p>
             <p className="why-body">
-              Clear labels, readable contrast and working keyboard controls help blind users and
-              people on a cracked phone screen alike. {BRAND.name} is named after that idea: fix
-              it for the people locked out, and it gets better for everyone.
+              Dropped kerbs were won by disabled campaigners, and now everyone with a pushchair or
+              a suitcase uses them. Accessible websites work the same way: clear labels and
+              readable text help someone on a cracked phone screen as much as a blind visitor.
             </p>
           </div>
           <RampArt />
@@ -63,12 +64,12 @@ export default function WhySection() {
 
         <div className="stats">
           <div className="stat">
-            <p className="stat-num">95.9%</p>
-            <p>of the top million home pages fail automated WCAG checks.</p>
+            <p className="stat-num">1 in 6</p>
+            <p>people worldwide live with a significant disability — about 1.3 billion people.</p>
           </div>
           <div className="stat">
-            <p className="stat-num">56</p>
-            <p>detectable errors on the average home page.</p>
+            <p className="stat-num">95.9%</p>
+            <p>of the top million home pages fail automated accessibility checks.</p>
           </div>
           <div className="stat">
             <p className="stat-num">41%</p>
@@ -79,8 +80,8 @@ export default function WhySection() {
           </div>
         </div>
         <p className="source">
-          Sources: WebAIM Million (2026); UK Government Digital Service accessibility tool audit
-          (2017).
+          Sources: World Health Organization (2023); WebAIM Million (2026); UK Government
+          Digital Service accessibility tool audit (2017).
         </p>
       </div>
     </section>

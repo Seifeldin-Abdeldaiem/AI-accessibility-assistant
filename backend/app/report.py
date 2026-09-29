@@ -11,7 +11,7 @@ from .config import Settings
 from .models import ScanReport, ScanSummary, ViolationGroup
 from .rule_guides import AFFECTED_GROUPS
 
-BRAND_NAME = "Curbcut"
+BRAND_NAME = "Unkerb"
 
 TOOL_COVERAGE_NOTE = (
     "This report only lists what automated checks (axe-core) can detect. "

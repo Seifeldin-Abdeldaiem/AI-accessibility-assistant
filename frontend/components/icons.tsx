@@ -29,8 +29,8 @@ function Svg({
   );
 }
 
-/** The brand mark: a curb cut in profile — street, ramp, pavement. */
-export function CurbcutMark({ size = 32 }: IconProps) {
+/** The brand mark: a kerb with the step taken out — street, ramp, pavement. */
+export function BrandMark({ size = 32 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
       <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#FFC91F" stroke="#16150F" strokeWidth="2.5" />
