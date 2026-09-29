@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from playwright.async_api import Browser, Page, Playwright, Route, async_playwright
+from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from .config import Settings
@@ -29,7 +30,7 @@ _SKIPPED_RESOURCE_TYPES = {"media"}
 # Very long pages (news homepages) make enormous full-page screenshots that
 # can exhaust a 512 MB server. Issues further down are still reported; they
 # just aren't pinned on the image.
-MAX_SCREENSHOT_HEIGHT = 6000
+MAX_SCREENSHOT_HEIGHT = 4000
 
 # After the HTML has loaded, how long to let the rest of the page settle.
 # Busy sites (ads, analytics, live tickers) may never go fully quiet, so
@@ -38,6 +39,13 @@ _SETTLE_WAITS_MS = (("load", 15_000), ("networkidle", 5_000))
 
 _FULL_SCREENSHOT_TIMEOUT_MS = 25_000
 _VIEWPORT_SCREENSHOT_TIMEOUT_MS = 15_000
+# JPEG is far cheaper for the browser to encode than PNG, which matters on a
+# 0.1-CPU instance. The annotated image the report shows is re-encoded later.
+_SCREENSHOT_FORMAT = {"type": "jpeg", "quality": 80}
+
+# Some pages reload or redirect themselves shortly after loading (consent
+# banners, geo redirects), which wipes the injected checker mid-run.
+_AXE_ATTEMPTS = 3
 
 
 @dataclass
@@ -178,15 +186,25 @@ class ScanSession:
             if height > MAX_SCREENSHOT_HEIGHT:
                 clip = {"x": 0, "y": 0, "width": width, "height": MAX_SCREENSHOT_HEIGHT}
             return await self.page.screenshot(
-                full_page=True, type="png", clip=clip, timeout=_FULL_SCREENSHOT_TIMEOUT_MS
+                full_page=True, clip=clip, timeout=_FULL_SCREENSHOT_TIMEOUT_MS, **_SCREENSHOT_FORMAT
             )
         except Exception as exc:
             logger.info("Full-page screenshot failed, trying viewport: %s", exc)
         try:
-            return await self.page.screenshot(type="png", timeout=_VIEWPORT_SCREENSHOT_TIMEOUT_MS)
+            return await self.page.screenshot(
+                timeout=_VIEWPORT_SCREENSHOT_TIMEOUT_MS, **_SCREENSHOT_FORMAT
+            )
         except Exception as exc:
             logger.info("Viewport screenshot failed, reporting without one: %s", exc)
             return None
+
+
+async def _settle(page: Page) -> None:
+    for state, wait_ms in _SETTLE_WAITS_MS:
+        try:
+            await page.wait_for_load_state(state, timeout=wait_ms)
+        except PlaywrightTimeoutError:
+            pass
 
 
 @asynccontextmanager
@@ -232,13 +250,20 @@ async def scan_session(safe_url: SafeUrl, settings: Settings):
             if response is None:
                 raise ScanBlockedError("The page did not respond. Please try again.")
 
-            for state, wait_ms in _SETTLE_WAITS_MS:
+            violations: list[RawViolation] | None = None
+            for attempt in range(1, _AXE_ATTEMPTS + 1):
+                await _settle(page)
                 try:
-                    await page.wait_for_load_state(state, timeout=wait_ms)
-                except PlaywrightTimeoutError:
-                    pass
-
-            violations = await _run_axe(page, settings)
+                    violations = await _run_axe(page, settings)
+                    break
+                except PlaywrightError as exc:
+                    if "context was destroyed" not in str(exc) and "navigat" not in str(exc):
+                        raise
+                    logger.info("Page navigated during the check (attempt %d): %s", attempt, exc)
+            if violations is None:
+                raise ScanBlockedError(
+                    "That page kept reloading itself while we were checking it. Please try again."
+                )
             title = await page.title()
 
             yield ScanSession(
