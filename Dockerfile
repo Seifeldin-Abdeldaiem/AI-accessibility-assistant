@@ -3,7 +3,7 @@
 # what render.yaml deploys. backend/Dockerfile still builds the API alone.
 
 # --- 1. Build the website as static files ---------------------------------
-FROM node:20-slim AS site
+FROM node:22-slim AS site
 WORKDIR /site
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
