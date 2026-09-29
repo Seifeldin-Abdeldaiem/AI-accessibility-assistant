@@ -1,5 +1,7 @@
 import type { ScanReport } from "./types";
 
+// An empty string means "same origin" — used when the backend serves this
+// site itself (the single-service Docker image).
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 

@@ -1,45 +1,28 @@
-# Render Blueprint (render.yaml spec) for deploying both services from one
-# repo. This has NOT been run against a live Render account from this
-# environment — no deployment credentials or outbound access to Render
-# were available here (see DEPLOYMENT.md for why). Treat it as a
-# verified-by-inspection starting point: check it against Render's current
-# Blueprint docs before your first deploy, since the YAML schema does
-# change between Render's releases.
+# Render Blueprint: the whole app as ONE free web service.
 #
-# Deploy: Render dashboard -> New -> Blueprint -> point at this repo.
-# After the first deploy, copy each service's actual public URL into the
-# other service's env vars below (CORS_ORIGINS and
-# NEXT_PUBLIC_API_BASE_URL) and redeploy — cross-service URL references
-# aren't set automatically here because Render's env-linking syntax for
-# a service's *public* hostname (as opposed to its private network
-# address) wasn't something this environment could verify live.
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo -> Apply.
+# No URLs to copy between services and no CORS to set: the image built from
+# the root Dockerfile serves the website and the scanning API on one origin.
+#
+# The image is exercised on every push by .github/workflows/docker.yml,
+# which builds it, runs it capped at 512 MB (the free plan's memory) and
+# scans a real public page.
 services:
   - type: web
-    name: accessibility-backend
+    name: unkerb
     runtime: docker
-    dockerContext: ./backend
-    dockerfilePath: ./backend/Dockerfile
-    # Headless Chromium needs real memory headroom; Render's smallest
-    # "free"/"starter" tiers are usually too tight for even one concurrent
-    # scan. Size this to your traffic, not to the cheapest option.
-    plan: standard
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Free: $0, sleeps after ~15 minutes idle, so the first visit after a
+    # quiet spell takes about a minute to wake. Move to "starter" or above
+    # for always-on and more memory headroom.
+    plan: free
     healthCheckPath: /api/health
     envVars:
-      - key: CORS_ORIGINS
-        value: "https://REPLACE-WITH-YOUR-FRONTEND-URL.onrender.com"
-      # Never set this to "true" in a deployment reachable from the
-      # internet — it disables the SSRF protection. Left unset here on
-      # purpose; the app already defaults it to false.
+      # One headless browser at a time keeps a scan inside 512 MB.
+      - key: MAX_CONCURRENT_SCANS
+        value: "1"
+      # Never add ALLOW_PRIVATE_NETWORKS here: it turns off the protection
+      # against scanning internal addresses. The app defaults it to false.
       - key: ANTHROPIC_API_KEY
-        sync: false # optional: only if you want to pay for everyone's AI
-        # calls yourself instead of relying on visitors' bring-your-own-key
-
-  - type: web
-    name: accessibility-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm run start -- --port $PORT
-    envVars:
-      - key: NEXT_PUBLIC_API_BASE_URL
-        value: "https://REPLACE-WITH-YOUR-BACKEND-URL.onrender.com"
+        sync: false # optional: leave blank — visitors can bring their own key

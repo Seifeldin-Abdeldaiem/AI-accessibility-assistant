@@ -8,6 +8,7 @@ from collections import OrderedDict
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 from .claude_client import ClaudeClient
 from .config import get_settings
@@ -146,3 +147,8 @@ async def get_scan_pdf(scan_id: str) -> Response:
 async def unhandled_exception_handler(request, exc):  # noqa: ARG001
     logger.exception("Unhandled error")
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+# Mounted last so every /api route above takes precedence over the site.
+if settings.frontend_dir:
+    app.mount("/", StaticFiles(directory=settings.frontend_dir, html=True), name="site")

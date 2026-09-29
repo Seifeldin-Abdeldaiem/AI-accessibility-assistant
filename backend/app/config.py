@@ -33,6 +33,10 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    # Directory holding the exported frontend (Next.js `out/`). When set, the
+    # backend serves the website too, so one service is the whole app.
+    frontend_dir: str | None = None
+
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
