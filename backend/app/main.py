@@ -81,15 +81,11 @@ async def create_scan(req: ScanRequest, request: Request) -> ScanReport:
             async with scan_session(safe_url, settings) as session:
                 groups = build_violation_groups(session.violations)
 
-                explain_tasks = []
-                for group in groups[: settings.max_groups_explained_by_claude]:
-                    explain_tasks.append(claude.explain_and_fix(group))
-                for group in groups[settings.max_groups_explained_by_claude :]:
-                    group.explanation_error = (
-                        "Not explained: this scan found more distinct issues than the "
-                        f"per-scan limit ({settings.max_groups_explained_by_claude}). "
-                        "The automated finding above is still valid."
-                    )
+                # Issues past the cap keep their built-in guidance.
+                explain_tasks = [
+                    claude.explain_and_fix(group)
+                    for group in groups[: settings.max_groups_explained_by_claude]
+                ]
                 if explain_tasks:
                     await asyncio.gather(*explain_tasks)
 
@@ -99,6 +95,7 @@ async def create_scan(req: ScanRequest, request: Request) -> ScanReport:
 
                 manual_items = await find_manual_review_items(session.page, claude)
                 screenshot = await session.screenshot()
+                ai_status, ai_note = claude.status()
 
                 report = build_report(
                     scan_id=scan_id,
@@ -107,6 +104,8 @@ async def create_scan(req: ScanRequest, request: Request) -> ScanReport:
                     groups=groups,
                     manual_review_items=manual_items,
                     screenshot_png=screenshot,
+                    ai_status=ai_status,
+                    ai_note=ai_note,
                     claude_calls_made=claude.calls_made,
                     claude_calls_skipped_budget=claude.calls_skipped_budget,
                 )

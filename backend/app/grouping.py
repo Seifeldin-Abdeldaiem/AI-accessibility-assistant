@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .models import ViolationGroup, ViolationNode
+from .rule_guides import build_guidance
 from .scanner import RawViolation
 
 # WCAG success-criterion tags look like "wcag111", "wcag412"; axe also
@@ -44,6 +45,13 @@ def build_violation_groups(violations: list[RawViolation]) -> list[ViolationGrou
                 wcag_tags=_wcag_tags(v.tags),
                 nodes=deduped_nodes,
                 total_node_count=v.total_node_count,
+                guidance=build_guidance(
+                    rule_id=v.rule_id,
+                    description=v.description,
+                    help_text=v.help_text,
+                    failure_summary=deduped_nodes[0].failure_summary if deduped_nodes else "",
+                    tags=v.tags,
+                ),
             )
         )
 

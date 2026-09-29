@@ -1,7 +1,12 @@
-# AI accessibility assistant
+# Curbcut — AI accessibility assistant
 
 Paste a URL. Get plain-English accessibility findings and code fixes for
 your own page, each one checked in a real browser before it's shown to you.
+
+Named after the curb-cut effect: ramps built for wheelchair users end up
+helping everyone with a pushchair or a suitcase, and accessible websites
+work the same way. The brand name lives in `frontend/lib/brand.ts` and
+`BRAND_NAME` in `backend/app/report.py` if you want to change it.
 
 This is a v1: one URL at a time, no sign-in. It reports what an automated
 scanner can find — it does not, and will not, claim a page is "compliant."
@@ -15,9 +20,11 @@ scanner can find — it does not, and will not, claim a page is "compliant."
    Every failure comes with its WCAG success criterion and the exact element.
 3. **Group** — repeats collapse into one finding. 40 product images with no
    alt text count as one problem in 40 places, not 40 problems to read.
-4. **Explain & fix** — for each group, Claude explains who's affected and
-   proposes a fix as a drop-in replacement for the flagged element's HTML,
-   preferring native HTML semantics over ARIA.
+4. **Explain & fix** — every group gets built-in, hand-written guidance
+   (`backend/app/rule_guides.py`): who it blocks, the steps to fix it, and a
+   before/after example — no API key needed. With a key (bring your own, or
+   one set on the server), Claude also rewrites the flagged element for
+   that exact page, preferring native HTML semantics over ARIA.
 5. **Verify** — each fix is applied to a copy of the live DOM in the
    browser and axe is re-run on it. Only fixes that actually clear the
    issue (and don't introduce a new one) are marked "checked."

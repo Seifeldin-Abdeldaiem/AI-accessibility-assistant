@@ -78,9 +78,44 @@ class ClaudeClient:
         key = api_key_override or settings.anthropic_api_key
         if key:
             self._client = anthropic.AsyncAnthropic(api_key=key)
+        self.key_supplied = bool(key)
+        self.auth_failed = False
+        self.api_errors = 0
+        self.issues_explained = 0
         self.estimated_spend_usd = 0.0
         self.calls_made = 0
         self.calls_skipped_budget = 0
+
+    def status(self) -> tuple[str, str | None]:
+        """One report-level AI status instead of an error on every issue.
+        Any issue Claude didn't cover silently falls back to the built-in
+        guidance, which is always present."""
+        if not self.key_supplied:
+            return "off", None
+        if self.auth_failed:
+            return (
+                "error",
+                "Anthropic didn't accept that API key, so this report uses the "
+                "built-in guidance. Check the key and scan again for tailored fixes.",
+            )
+        if self.issues_explained == 0 and self.api_errors:
+            return (
+                "error",
+                "Anthropic's API returned errors for this scan, so this report "
+                "uses the built-in guidance. Try again in a minute.",
+            )
+        notes = []
+        if self.calls_skipped_budget:
+            notes.append(
+                f"{self.calls_skipped_budget} lower-priority issue(s) use built-in "
+                "guidance because this scan reached its AI spend cap."
+            )
+        if self.api_errors:
+            notes.append(
+                f"{self.api_errors} issue(s) use built-in guidance because "
+                "Anthropic's API returned an error for them."
+            )
+        return "on", " ".join(notes) or None
 
     @property
     def available(self) -> bool:
@@ -98,18 +133,10 @@ class ClaudeClient:
 
     async def explain_and_fix(self, group: ViolationGroup) -> ViolationGroup:
         if not self.available:
-            group.explanation_error = (
-                "AI explanation unavailable: no Anthropic API key was provided "
-                "for this scan. The automated finding above is still valid."
-            )
             return group
 
         if not self._budget_left():
             self.calls_skipped_budget += 1
-            group.explanation_error = (
-                "AI explanation skipped: this scan's spend budget was reached. "
-                "The automated finding above is still valid."
-            )
             return group
 
         representative = group.nodes[0] if group.nodes else None
@@ -152,22 +179,32 @@ class ClaudeClient:
                 (b for b in response.content if b.type == "tool_use"), None
             )
             if tool_use is None:
+                self.api_errors += 1
                 group.explanation_error = "AI response did not include a proposed fix."
                 return group
 
             payload = tool_use.input
-            group.explanation = payload.get("explanation", "").strip()
+            group.explanation = payload.get("explanation", "").strip() or None
             if representative and payload.get("new_html"):
                 group.fix = Fix(
                     old_html=representative.html,
                     new_html=payload["new_html"].strip(),
                     note=payload.get("note"),
                 )
+            self.issues_explained += 1
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
+            # A bad key fails identically for every issue; stop calling
+            # Anthropic for the rest of this scan instead of repeating it.
+            logger.warning("Anthropic rejected the supplied key: %s", type(exc).__name__)
+            self.auth_failed = True
+            self._client = None
         except anthropic.APIError as exc:
             logger.warning("Claude API error for rule %s: %s", group.rule_id, exc)
+            self.api_errors += 1
             group.explanation_error = f"AI explanation failed: {exc}"
         except Exception as exc:  # noqa: BLE001 - surface to report, don't crash scan
             logger.exception("Unexpected error explaining rule %s", group.rule_id)
+            self.api_errors += 1
             group.explanation_error = f"AI explanation failed: {exc}"
 
         return group

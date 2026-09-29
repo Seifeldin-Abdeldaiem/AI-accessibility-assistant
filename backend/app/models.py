@@ -24,6 +24,22 @@ class Fix(BaseModel):
     note: str | None = None
 
 
+class Guidance(BaseModel):
+    """Built-in, non-AI guidance, always present, so a scan without an
+    Anthropic key still reads as a complete report rather than a list of
+    findings with "unavailable" notes on each."""
+
+    # Keys from rule_guides.AFFECTED_GROUPS, e.g. "screen-reader".
+    affects: list[str]
+    summary: str
+    steps: list[str]
+    example_before: str | None = None
+    example_after: str | None = None
+    # False when this is the generic fallback built from axe's own text
+    # rather than a hand-written guide for this rule.
+    curated: bool = True
+
+
 class ViolationGroup(BaseModel):
     rule_id: str
     impact: str  # minor | moderate | serious | critical
@@ -34,6 +50,7 @@ class ViolationGroup(BaseModel):
     nodes: list[ViolationNode]
     total_node_count: int  # may exceed len(nodes) if truncated
 
+    guidance: Guidance | None = None
     explanation: str | None = None
     fix: Fix | None = None
     fix_verified: bool | None = None
@@ -72,5 +89,10 @@ class ScanReport(BaseModel):
     screenshot_png_base64: str | None = None
     tool_coverage_note: str
     automated_checks_only: bool = True
+    # "off": no key supplied, report uses built-in guidance only.
+    # "on": Claude wrote explanations/fixes for at least the top issues.
+    # "error": a key was supplied but Anthropic rejected it or failed.
+    ai_status: str = "off"
+    ai_note: str | None = None
     claude_calls_made: int = 0
     claude_calls_skipped_budget: int = 0

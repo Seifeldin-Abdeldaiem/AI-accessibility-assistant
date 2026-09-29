@@ -1,46 +1,61 @@
-import { CheckCircleIcon } from "./icons";
+import IssueCard from "./IssueCard";
+import type { ViolationGroup } from "@/lib/types";
+
+const SAMPLE: ViolationGroup = {
+  rule_id: "label",
+  impact: "serious",
+  description: "Ensure every form element has a label",
+  help_text: "Form field has no label",
+  help_url: "https://dequeuniversity.com/rules/axe/4.10/label",
+  wcag_tags: ["wcag412", "wcag131"],
+  nodes: [
+    {
+      target: "#signup input",
+      html: '<input type="email" placeholder="Email address">',
+      failure_summary: "",
+      bounding_box: null,
+    },
+  ],
+  total_node_count: 3,
+  guidance: {
+    affects: ["screen-reader", "voice", "cognitive"],
+    summary: "",
+    steps: [],
+    example_before: null,
+    example_after: null,
+    curated: true,
+  },
+  explanation:
+    "Screen readers just say “edit text”, so blind visitors don’t know what to type. The placeholder also vanishes once someone starts typing, which trips up people with memory difficulties.",
+  fix: {
+    old_html: '<input type="email" placeholder="Email address">',
+    new_html:
+      '<label for="signup-email">Email address</label>\n<input type="email" id="signup-email" autocomplete="email">',
+    note: null,
+  },
+  fix_verified: true,
+  fix_verification_note: "Applied in a real browser and re-checked: issue gone, nothing new introduced.",
+  explanation_error: null,
+};
 
 export default function DemoExample() {
   return (
-    <div className="demo-section">
-      <h2>
-        <span>What a finding looks like</span>
-      </h2>
-      <ul className="issue-list">
-        <li className="issue-card" data-impact="serious">
-          <span className="demo-badge">Example — not a live result</span>
-          <div className="issue-heading">
-            <span className="badge" style={{ background: "var(--serious)" }}>
-              Serious
-            </span>
-            <p className="issue-title">Form field has no label</p>
-          </div>
-          <p className="issue-meta">WCAG 4.1.2 · 3 places on this page</p>
-
-          <p className="explanation">
-            Screen readers just say &ldquo;edit text,&rdquo; so blind visitors
-            don&apos;t know what to type. The placeholder also vanishes once
-            someone starts typing, which trips up people with memory
-            difficulties.
+    <section className="section" aria-labelledby="demo-heading">
+      <div className="container">
+        <div className="section-head">
+          <h2 id="demo-heading">What you get for every problem</h2>
+          <p>
+            Who it blocks, what we found, and the change that fixes it — numbered to match a
+            marked-up screenshot of your page.
           </p>
-
-          <pre className="code-block" tabIndex={0} aria-label="Suggested fix, as a diff">
-            <span className="diff-old">
-              - &lt;input type=&quot;email&quot; placeholder=&quot;Email address&quot;&gt;
-            </span>
-            <span className="diff-new">
-              + &lt;label for=&quot;signup-email&quot;&gt;Email address&lt;/label&gt;
-              <br />
-              + &lt;input type=&quot;email&quot; id=&quot;signup-email&quot; autocomplete=&quot;email&quot;&gt;
-            </span>
-          </pre>
-
-          <p className="verify-line verify-yes">
-            <CheckCircleIcon />
-            Fix checked: issue gone, nothing new introduced.
-          </p>
-        </li>
-      </ul>
-    </div>
+        </div>
+        <div className="demo-wrap">
+          <p className="demo-ribbon">Sample finding</p>
+          <ul className="issue-list">
+            <IssueCard group={SAMPLE} index={1} headingLevel={3} defaultOpen sample />
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
