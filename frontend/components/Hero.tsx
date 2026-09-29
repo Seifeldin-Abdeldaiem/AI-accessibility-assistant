@@ -12,8 +12,10 @@ export default function Hero({ children }: { children: React.ReactNode }) {
             Free website accessibility checker
           </p>
           <h1 id="hero-heading">
-            Can <mark>disabled people</mark> use{" "}
-            <span className="nowrap">your website?</span>
+            Is your website{" "}
+            <span className="nowrap">
+              <mark>disability friendly</mark>?
+            </span>
           </h1>
           <p className="hero-lede">
             <strong>1 in 6 people</strong> lives with a disability. Paste your web address and in

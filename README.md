@@ -1,4 +1,4 @@
-# Unkerb — can disabled people use your website?
+# Unkerb — is your website disability friendly?
 
 Paste a URL. In about 30 seconds, get plain-English findings on what stops
 blind, deaf, low-vision and keyboard-only people using your page, and the
