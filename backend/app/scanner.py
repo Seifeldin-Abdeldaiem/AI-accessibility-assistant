@@ -36,6 +36,9 @@ MAX_SCREENSHOT_HEIGHT = 6000
 # these are best-effort waits, not requirements.
 _SETTLE_WAITS_MS = (("load", 15_000), ("networkidle", 5_000))
 
+_FULL_SCREENSHOT_TIMEOUT_MS = 25_000
+_VIEWPORT_SCREENSHOT_TIMEOUT_MS = 15_000
+
 
 @dataclass
 class RawViolationNode:
@@ -160,18 +163,30 @@ class ScanSession:
     final_url: str
     violations: list[RawViolation]
 
-    async def screenshot(self) -> bytes:
-        height = await self.page.evaluate(
-            "Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0)"
-        )
-        width = self.page.viewport_size["width"] if self.page.viewport_size else 1366
-        if height > MAX_SCREENSHOT_HEIGHT:
-            return await self.page.screenshot(
-                full_page=True,
-                type="png",
-                clip={"x": 0, "y": 0, "width": width, "height": MAX_SCREENSHOT_HEIGHT},
+    async def screenshot(self) -> bytes | None:
+        """Best effort: a slow machine can take too long to paint a huge
+        page, and the findings matter more than the picture. Try the full
+        page (height-capped), then just the visible viewport, then give up
+        and let the report go out without an image."""
+        try:
+            height = await self.page.evaluate(
+                "Math.max(document.documentElement.scrollHeight,"
+                " document.body ? document.body.scrollHeight : 0)"
             )
-        return await self.page.screenshot(full_page=True, type="png")
+            width = self.page.viewport_size["width"] if self.page.viewport_size else 1366
+            clip = None
+            if height > MAX_SCREENSHOT_HEIGHT:
+                clip = {"x": 0, "y": 0, "width": width, "height": MAX_SCREENSHOT_HEIGHT}
+            return await self.page.screenshot(
+                full_page=True, type="png", clip=clip, timeout=_FULL_SCREENSHOT_TIMEOUT_MS
+            )
+        except Exception as exc:
+            logger.info("Full-page screenshot failed, trying viewport: %s", exc)
+        try:
+            return await self.page.screenshot(type="png", timeout=_VIEWPORT_SCREENSHOT_TIMEOUT_MS)
+        except Exception as exc:
+            logger.info("Viewport screenshot failed, reporting without one: %s", exc)
+            return None
 
 
 @asynccontextmanager
@@ -188,6 +203,9 @@ async def scan_session(safe_url: SafeUrl, settings: Settings):
         try:
             context = await browser.new_context(
                 viewport={"width": 1366, "height": 900},
+                # Sites with a strict Content-Security-Policy (gov.uk, many
+                # banks) would otherwise refuse the injected axe script.
+                bypass_csp=True,
                 user_agent=(
                     "Mozilla/5.0 (compatible; AccessibilityAssistant/0.1; "
                     "+https://github.com/) AccessibilityAudit"

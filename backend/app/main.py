@@ -98,7 +98,10 @@ async def create_scan(req: ScanRequest, request: Request) -> ScanReport:
                 screenshot = await session.screenshot()
                 ai_status, ai_note = claude.status()
 
-                report = build_report(
+                # Annotating and encoding the screenshot is CPU-heavy; on a
+                # small instance it must not stall health checks.
+                report = await asyncio.to_thread(
+                    build_report,
                     scan_id=scan_id,
                     url=session.final_url,
                     page_title=session.page_title,
