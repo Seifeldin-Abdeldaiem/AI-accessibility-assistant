@@ -1,0 +1,52 @@
+name: Real sites (free-plan limits)
+
+# Scans heavy, real-world pages with the production image squeezed to
+# Render's free plan (0.1 CPU, 512 MB). Third-party sites change, so this
+# reports rather than gates: run it by hand or on claude/** branches.
+on:
+  push:
+    branches: ["claude/**"]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build image
+        run: docker build -t unkerb .
+
+      - name: Start container (0.1 CPU, 512 MB)
+        run: |
+          docker run -d --name unkerb --cpus 0.1 --memory 512m -p 8000:8000 \
+            -e MAX_CONCURRENT_SCANS=1 unkerb
+          for i in $(seq 1 90); do
+            curl -fs http://localhost:8000/api/health && exit 0
+            sleep 2
+          done
+          docker logs unkerb
+          exit 1
+
+      - name: Scan
+        run: |
+          fail=0
+          for url in https://www.bbc.co.uk/ https://www.gov.uk/ https://www.theguardian.com/uk; do
+            start=$(date +%s)
+            code=$(curl -s -o out.json -w "%{http_code}" -m 600 -X POST http://localhost:8000/api/scan \
+              -H "Content-Type: application/json" -d "{\"url\":\"$url\"}")
+            secs=$(( $(date +%s) - start ))
+            if [ "$code" = "200" ]; then
+              python3 -c "import json; r=json.load(open('out.json')); print('OK  ', '$url', '${secs}s', len(r['groups']), 'issue groups')"
+            else
+              echo "FAIL $url ${secs}s HTTP $code: $(head -c 400 out.json)"
+              fail=1
+            fi
+            docker inspect unkerb --format 'container running={{.State.Running}} oom_killed={{.State.OOMKilled}} restarts={{.RestartCount}}'
+          done
+          exit $fail
+
+      - name: Container logs
+        if: always()
+        run: docker logs unkerb 2>&1 | tail -80 || true
