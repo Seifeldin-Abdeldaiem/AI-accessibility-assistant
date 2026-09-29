@@ -1,0 +1,66 @@
+name: Production image
+
+# Builds the exact image Render deploys, runs it with the free plan's memory
+# limit, and checks the site and a real scan work end to end.
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t unkerb .
+
+      - name: Start container (512 MB, like Render's free plan)
+        run: |
+          docker run -d --name unkerb --memory 512m -p 8000:8000 -e MAX_CONCURRENT_SCANS=1 unkerb
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:8000/api/health && exit 0
+            sleep 2
+          done
+          docker logs unkerb
+          exit 1
+
+      - name: Website is served
+        run: |
+          curl -fs http://localhost:8000/ -o index.html
+          grep -q "disability friendly" index.html
+          curl -fs -o /dev/null http://localhost:8000/icon.svg
+
+      - name: Scan a real page
+        run: |
+          curl -fs -X POST http://localhost:8000/api/scan \
+            -H "Content-Type: application/json" \
+            -d '{"url":"https://example.com"}' -o scan.json
+          python3 - <<'PY'
+          import json
+          r = json.load(open("scan.json"))
+          assert r["url"].startswith("https://example.com"), r["url"]
+          assert r["ai_status"] == "off", r["ai_status"]
+          assert r["screenshot_png_base64"], "no screenshot"
+          print("scan ok:", len(r["groups"]), "issue groups")
+          PY
+
+      - name: Reports export
+        run: |
+          id=$(python3 -c 'import json; print(json.load(open("scan.json"))["id"])')
+          curl -fs "http://localhost:8000/api/scan/$id/report.md" | head -3
+          curl -fs "http://localhost:8000/api/scan/$id/report.pdf" -o report.pdf
+          head -c 4 report.pdf | grep -q "%PDF"
+
+      - name: Private addresses are refused
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/api/scan \
+            -H "Content-Type: application/json" -d '{"url":"http://169.254.169.254/"}')
+          test "$code" = "400"
+
+      - name: Container logs
+        if: always()
+        run: docker logs unkerb || true

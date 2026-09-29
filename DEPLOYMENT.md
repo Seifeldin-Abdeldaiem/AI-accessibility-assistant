@@ -1,88 +1,68 @@
-# Deploying this to the public internet
+# Publishing Unkerb
 
-Everything in this repo works and has been tested — but nothing is live
-yet. That last step needs a human, and here's exactly why: this project
-was built inside an isolated cloud sandbox with no hosting-provider
-credentials, no deployment CLI, and a network policy that outright blocks
-outbound connections to Render, Vercel, and Fly.io (confirmed directly —
-`curl https://vercel.com` returns a 403 policy denial from the sandbox's
-egress proxy). There's no account I can create, no token I can generate,
-and no button I can click from inside this environment to make a public
-URL exist. That's a real wall, not a formality.
+The whole app (the website and the scanner) ships as **one Docker image**
+and one web service. Its site is a static Next.js export, and the FastAPI
+process that runs the scans serves it too. There are no URLs to wire
+between services and no CORS to configure.
 
-What follows is the exact, minimal set of steps to finish the job
-yourself. Everything up to "click deploy" is already done.
+## Deploy on Render (free)
 
-## What's already prepared
+1. Sign in at [dashboard.render.com](https://dashboard.render.com). Any
+   existing Render account works; you don't need a new one per website.
+2. **New → Blueprint**, choose the `AI-accessibility-assistant` repo
+   (connect GitHub first if Render asks), then **Apply**.
+3. Render reads `render.yaml`, builds the root `Dockerfile` and starts a
+   service called `unkerb` on the free plan. When the first build is done
+   (about 5–10 minutes), the site is live at the URL Render shows. It is
+   usually `https://unkerb.onrender.com`, with a suffix if that name is
+   taken.
 
-- `backend/Dockerfile` — builds the FastAPI service with Playwright's
-  Chromium and all its OS dependencies (`playwright install --with-deps
-  chromium` handles this; it's the step that trips up most from-scratch
-  Playwright deployments). **Not build-tested from this sandbox** — the
-  Docker client is installed here but there's no daemon running
-  (`docker ps` fails with "no such file or directory" on the socket), so
-  `docker build` isn't possible either. It's been reviewed line by line
-  against patterns already proven working in this session (the same
-  `uvicorn app.main:app` invocation, the same Playwright version) rather
-  than actually executed — build it once, the first time, before trusting
-  it blindly.
-- `backend/.dockerignore`
-- `render.yaml` — a Render Blueprint covering both services. It has
-  **not** been run against a live Render account (see above) — treat it
-  as a verified-by-inspection starting point, and check it against
-  Render's current Blueprint docs before your first deploy, since that
-  schema shifts between Render releases.
-- Bring-your-own-key (BYOK): the app doesn't need `ANTHROPIC_API_KEY` set
-  on the server at all. Visitors can paste their own Anthropic key into
-  the scan form's "Use your own Anthropic API key" section, and it's used
-  for that one scan only — never logged, never stored. This is why you
-  can publish this without paying for anyone else's AI usage.
+That is everything. Leave `ANTHROPIC_API_KEY` blank when Render asks.
+Visitors can paste their own key into the scan form (it is used for that
+one scan and never stored), and without a key every report still comes
+with the built-in plain-English guidance.
 
-## Steps
+After that, every merge to `main` redeploys automatically.
 
-1. **Pick a host for the backend.** It needs to run a Docker image with
-   enough memory for headless Chromium — 512MB is tight, 1GB+ is safer.
-   Render, Fly.io, and Railway all work; the Dockerfile doesn't assume any
-   one of them.
-2. **Deploy the backend first**, using `backend/Dockerfile` (or the
-   `accessibility-backend` service in `render.yaml` if you're using
-   Render's Blueprint flow). Set these environment variables:
-   - `CORS_ORIGINS` — the frontend's URL, once you know it (step 4 makes
-     this a two-pass thing: deploy backend, deploy frontend, come back and
-     set this, redeploy backend).
-   - `ANTHROPIC_API_KEY` — **leave this unset.** BYOK means visitors bring
-     their own; setting this here makes you pay for every visitor's usage
-     instead of the FTC-safe default.
-   - Do **not** set `ALLOW_PRIVATE_NETWORKS` — it must stay unset/`false`
-     in any deployment reachable from the internet. It exists only to test
-     against a local fixture page during development; leaving it unset is
-     what keeps the SSRF protection active in production.
-3. **Note the backend's public URL** once it's live (e.g.
-   `https://accessibility-backend.onrender.com`) and confirm
-   `<that-url>/api/health` returns `{"status":"ok",...}`.
-4. **Deploy the frontend** (Vercel is the zero-config option for Next.js;
-   `render.yaml`'s `accessibility-frontend` service works too). Set:
-   - `NEXT_PUBLIC_API_BASE_URL` — the backend URL from step 3.
-5. **Go back and set `CORS_ORIGINS`** on the backend to the frontend's
-   actual URL from step 4, then redeploy the backend so the browser is
-   allowed to call it.
-6. **Smoke test it**: open the frontend URL, scan a real page, confirm
-   results come back. Then try the BYOK field with a real key to confirm
-   the AI explanations/fixes path works end to end — that part was only
-   tested against the live Anthropic API with an intentionally invalid
-   key from this sandbox (to prove the error path works without
-   spending anything); a real key's happy path hasn't been observed yet.
+### What the free plan means
 
-## Two things worth doing before pointing real traffic at it
+- **$0**, 512 MB memory. The image is tested at exactly that limit (see
+  below). `MAX_CONCURRENT_SCANS=1` makes scans queue instead of running two
+  browsers at once.
+- The service **sleeps after about 15 minutes with no visitors**. The first
+  visit after that takes about a minute while it wakes up. For always-on,
+  change `plan: free` to `plan: starter` in `render.yaml`.
 
-- **Rate limiting is per-process, in-memory, and per-IP** (see
-  `backend/app/rate_limit.py`) — it resets on every deploy/restart and
-  doesn't coordinate across multiple instances. Fine for a single
-  instance; if you ever need to run more than one backend process, this
-  needs a shared store (Redis) instead, and the Dockerfile's `--workers 1`
-  should stay pinned to 1 per instance until that's rebuilt — with more
-  than one worker, scan reports and rate limits would silently split
-  across workers.
-- **No monitoring or alerting is wired up.** Uvicorn logs to stdout,
-  which most PaaS providers capture automatically, but there's nothing
-  watching for errors or unusual traffic beyond that.
+## How the image is tested
+
+`.github/workflows/docker.yml` runs on every push and pull request. It:
+
+1. builds the root `Dockerfile` (the same image Render deploys),
+2. runs it with `--memory 512m`,
+3. checks the website is served,
+4. scans `https://example.com` for real,
+5. downloads the Markdown and PDF reports,
+6. confirms a cloud-metadata address (`169.254.169.254`) is refused.
+
+## Never do this
+
+Don't set `ALLOW_PRIVATE_NETWORKS` on a public deployment. It switches off
+the protection that stops people using the scanner to reach internal
+addresses, and exists only for scanning a local test page in development.
+
+## Other hosts
+
+Any host that runs a Docker image and gives it a `PORT` works (Fly.io,
+Railway, Google Cloud Run, a VPS): build the root `Dockerfile`, expose the
+port and point the health check at `/api/health`. `backend/Dockerfile`
+still builds the API alone if you'd rather host the website separately
+(set `NEXT_PUBLIC_API_BASE_URL` for the website and `CORS_ORIGINS` for
+the API).
+
+## Before real traffic
+
+- **Rate limits and reports live in memory** in the single process
+  (`backend/app/rate_limit.py`, default 10 scans per IP per hour). They
+  reset on each deploy or restart. Keep one instance and one worker
+  unless you move them to a shared store such as Redis.
+- **There is no monitoring yet** beyond the logs Render keeps.

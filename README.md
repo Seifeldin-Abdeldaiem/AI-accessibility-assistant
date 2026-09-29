@@ -142,8 +142,9 @@ deployment reachable by anyone else.**
 
 ## Deploying this publicly
 
-See `DEPLOYMENT.md` for a from-scratch deployment guide, including a
-`Dockerfile` and a Render Blueprint (`render.yaml`).
+The root `Dockerfile` builds the whole app (website and scanner) as one
+image, and `render.yaml` deploys it to Render's free plan: **New →
+Blueprint → this repo → Apply**. See `DEPLOYMENT.md` for the details.
 
 ## Roadmap
 
