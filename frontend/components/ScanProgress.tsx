@@ -9,6 +9,10 @@ import { CheckIcon } from "./icons";
 // approximate.
 const STEP_MS = 2600;
 
+// Big, busy pages (news sites, shops) can take a couple of minutes on a
+// small server. Past this point, say so, so a long scan doesn't look stuck.
+const REASSURE_AFTER_S = 40;
+
 export default function ScanProgress({ withAi }: { withAi: boolean }) {
   const steps = [
     "Opening the page in a real browser",
@@ -58,6 +62,15 @@ export default function ScanProgress({ withAi }: { withAi: boolean }) {
           );
         })}
       </ol>
+      {/* Kept in the DOM from the start: screen readers announce a live
+          region's text changing, not a region that appears already filled. */}
+      <p className="progress-note" role="status">
+        {seconds >= REASSURE_AFTER_S && (
+          <span className="soft-in">
+            Big, busy pages can take a couple of minutes. It&apos;s still working.
+          </span>
+        )}
+      </p>
     </div>
   );
 }

@@ -18,8 +18,8 @@ export default function Hero({ children }: { children: React.ReactNode }) {
             </span>
           </h1>
           <p className="hero-lede">
-            <strong>1 in 6 people</strong> lives with a disability. Paste your web address and in
-            about 30 seconds {BRAND.name} shows what&apos;s stopping blind, deaf, low-vision and
+            <strong>1 in 6 people</strong> lives with a disability. Paste your web address and in a
+            minute or two {BRAND.name} shows what&apos;s stopping blind, deaf, low-vision and
             keyboard-only visitors — and exactly how to fix it.
           </p>
 
@@ -30,7 +30,7 @@ export default function Hero({ children }: { children: React.ReactNode }) {
               <CheckIcon size={16} /> Free, no sign-up
             </li>
             <li>
-              <CheckIcon size={16} /> Results in about 30 seconds
+              <CheckIcon size={16} /> Results in a minute or two
             </li>
             <li>
               <CheckIcon size={16} /> Fixes in plain English
