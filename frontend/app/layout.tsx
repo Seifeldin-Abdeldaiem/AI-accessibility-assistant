@@ -8,7 +8,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: `${BRAND.name} — is your website disability friendly?`,
-  description: `Paste a URL. In about 30 seconds ${BRAND.name} shows what stops blind, deaf, low-vision and keyboard-only people using your page, and the code change that fixes it.`,
+  description: `Paste a URL. In a minute or two ${BRAND.name} shows what stops blind, deaf, low-vision and keyboard-only people using your page, and the code change that fixes it.`,
 };
 
 export const viewport: Viewport = {

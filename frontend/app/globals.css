@@ -680,6 +680,16 @@ a:hover {
   color: var(--muted);
 }
 
+.progress-note {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.progress-note:not(:empty) {
+  margin-top: 0.9rem;
+}
+
 .progress-steps {
   list-style: none;
   margin: 0;

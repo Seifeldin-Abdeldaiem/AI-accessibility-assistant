@@ -1,6 +1,6 @@
 # Unkerb — is your website disability friendly?
 
-Paste a URL. In about 30 seconds, get plain-English findings on what stops
+Paste a URL. In a minute or two, get plain-English findings on what stops
 blind, deaf, low-vision and keyboard-only people using your page, and the
 code change that fixes each one.
 
