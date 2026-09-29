@@ -76,6 +76,9 @@ def annotate_screenshot(png_bytes: bytes, groups: list[ViolationGroup]) -> bytes
             continue
         color = IMPACT_COLORS.get(group.impact, IMPACT_COLORS["minor"])
         x, y, w, h = box["x"], box["y"], box["width"], box["height"]
+        if y >= image.height:
+            # Below the (height-capped) screenshot; still listed in the report.
+            continue
         draw.rectangle([x, y, x + w, y + h], outline=color, width=3)
 
         cx = min(max(x, radius + 2), image.width - radius - 2)
