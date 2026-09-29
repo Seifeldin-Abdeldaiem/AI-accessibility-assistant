@@ -1,49 +1,41 @@
-import { ScanIcon, SparkleIcon, CheckShieldIcon, FileOutIcon } from "./icons";
+import HeroMock from "./HeroMock";
+import { CheckIcon } from "./icons";
+import { BRAND } from "@/lib/brand";
 
-const FEATURES = [
-  {
-    icon: ScanIcon,
-    title: "Scans the real page",
-    body: "Loads your URL in a real browser and runs axe-core, so JavaScript-rendered content is checked the way a visitor sees it.",
-  },
-  {
-    icon: SparkleIcon,
-    title: "Plain-English fixes",
-    body: "Claude explains who's affected and proposes a drop-in code fix, preferring native HTML over ARIA.",
-  },
-  {
-    icon: CheckShieldIcon,
-    title: "Verified, not guessed",
-    body: "Every fix is applied to the live DOM and re-checked. Only fixes proven to work get a ✓.",
-  },
-  {
-    icon: FileOutIcon,
-    title: "Export the report",
-    body: "Take findings with you as Markdown or PDF, screenshot included.",
-  },
-];
-
-export default function Hero() {
+export default function Hero({ children }: { children: React.ReactNode }) {
   return (
-    <div className="hero">
-      <h1>Find what's blocking people from using your site</h1>
-      <p className="tagline">
-        Paste a URL. Get plain-English accessibility findings and code fixes,
-        each one checked in a real browser before you see it.
-      </p>
+    <section className="hero" aria-labelledby="hero-heading">
+      <div className="container hero-grid">
+        <div>
+          <p className="eyebrow">
+            <span className="eyebrow-dot" aria-hidden="true" />
+            Free website accessibility checker
+          </p>
+          <h1 id="hero-heading">
+            Find what&apos;s <mark>blocking people</mark> from using{" "}
+            <span className="nowrap">your site.</span>
+          </h1>
+          <p className="hero-lede">
+            Paste a URL. {BRAND.name} shows every barrier it can detect, who it shuts out, and the
+            code change that fixes it — in plain English.
+          </p>
 
-      <h2 className="visually-hidden">How it works</h2>
-      <div className="feature-strip">
-        {FEATURES.map(({ icon: Icon, title, body }) => (
-          <div className="feature-card" key={title}>
-            <div className="feature-icon">
-              <Icon size={18} />
-            </div>
-            <h3>{title}</h3>
-            <p>{body}</p>
-          </div>
-        ))}
+          {children}
+
+          <ul className="hero-points">
+            <li>
+              <CheckIcon size={16} /> Real-browser scan
+            </li>
+            <li>
+              <CheckIcon size={16} /> WCAG checks by axe-core
+            </li>
+            <li>
+              <CheckIcon size={16} /> Markdown &amp; PDF export
+            </li>
+          </ul>
+        </div>
+        <HeroMock />
       </div>
-    </div>
+    </section>
   );
 }
