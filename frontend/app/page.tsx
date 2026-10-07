@@ -11,7 +11,7 @@ import LockedOut from "@/components/LockedOut";
 import HowItWorks from "@/components/HowItWorks";
 import WhySection from "@/components/WhySection";
 import { AlertIcon } from "@/components/icons";
-import { ApiRequestError, runScan } from "@/lib/api";
+import { ApiRequestError, runScan, wakeOtherSites } from "@/lib/api";
 import type { ScanReport } from "@/lib/types";
 
 export default function HomePage() {
@@ -20,6 +20,13 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [withAi, setWithAi] = useState(false);
   const reportHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  // A real visitor opened the page (bots that don't run JavaScript and the
+  // keep-awake health ping never get here): wake the other sites. The
+  // server limits this to one round every 15 minutes.
+  useEffect(() => {
+    wakeOtherSites();
+  }, []);
 
   // Once a report renders, move focus to its heading so keyboard and screen
   // reader users land on the results instead of staying on the form.

@@ -20,6 +20,7 @@ from .report import build_report, render_html, render_markdown, render_pdf
 from .scanner import ScanBlockedError, scan_session
 from .security import UnsafeUrlError, validate_url
 from .verifier import verify_fix
+from .wake import Waker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ app.add_middleware(
 )
 
 _scan_semaphore = asyncio.Semaphore(settings.max_concurrent_scans)
+_waker = Waker(settings.wake_url_list(), settings.wake_interval_seconds)
 _reports: "OrderedDict[str, ScanReport]" = OrderedDict()
 
 
@@ -55,6 +57,14 @@ def _get_report_or_404(scan_id: str) -> ScanReport:
 @app.get("/api/health")
 async def health() -> dict:
     return {"status": "ok", "claude_configured": bool(settings.anthropic_api_key)}
+
+
+@app.post("/api/wake", status_code=202)
+async def wake_other_sites() -> dict:
+    """Called by the page when a real visitor opens it (the keep-awake ping
+    only hits /api/health). Pings the configured sites, at most once per
+    wake_interval_seconds; returns whether a new round started."""
+    return {"waking": _waker.trigger()}
 
 
 @app.post("/api/scan", response_model=ScanReport)
