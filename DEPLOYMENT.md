@@ -56,7 +56,7 @@ site calls its own API on whatever address it is served from.
   browsers at once.
 - The service **sleeps after about 15 minutes with no visitors**. The first
   visit after that takes about a minute while it wakes up.
-  `.github/workflows/keep-awake.yml` pings `/api/health` every 5 minutes to
+  `.github/workflows/keep-awake.yml` pings `/api/health` every 14 minutes to
   keep it awake. Change `SITE_URL` there if the service's address changes.
 - **Free hours are shared.** A Render workspace gets about 750 free instance
   hours a month across all its free services, and an always-awake service
