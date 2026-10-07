@@ -56,38 +56,31 @@ site calls its own API on whatever address it is served from.
   browsers at once.
 - The service **sleeps after about 15 minutes with no visitors**. The first
   visit after that takes about a minute while it wakes up.
-  `.github/workflows/keep-awake.yml` pings `/api/health` every 14 minutes to
-  keep it awake. Change `SITE_URL` there if the service's address changes.
 - **Free hours are shared.** A Render workspace gets about 750 free instance
-  hours a month across all its free services, and an always-awake service
-  uses about 730 of them. If other free services in the same workspace also
-  stay busy, the workspace can run out before the month ends and Render
-  suspends its free services until the next month. Watch the usage under
-  **Billing** in Render; to stop pinging, disable the workflow in the
-  repository's **Actions** tab.
-- For always-on without pinging (and much faster scans), change
+  hours a month across all its free services, enough to keep only **one**
+  service awake all month. On this workspace that one is Atlas's website
+  (its keep-awake workflow lives in the Atlas repository). When someone
+  opens Atlas, it wakes Unkerb, Atlas's API and LeadScout, so Unkerb is
+  often already awake for visitors who come through Atlas.
+- For always-on without relying on that (and much faster scans), change
   `plan: free` to `plan: starter` in `render.yaml`.
 
-### Waking the other sites when someone opens Unkerb
+### Making Unkerb the always-awake hub again
 
-When a visitor opens Unkerb in a browser, the page calls `POST /api/wake`
-and the server pings every URL in `WAKE_URLS` (set in `render.yaml`) so
-those sleeping free services start booting. Currently that's Atlas's website
-and API and LeadScout.
+Unkerb has the same "wake the others" feature, currently switched off:
 
-- **Only real visitors trigger it.** The keep-awake workflow calls
-  `/api/health` and never loads the page, and bots that don't run
-  JavaScript never reach the call.
-- **At most one round every 15 minutes** (`WAKE_INTERVAL_SECONDS`), however
-  many people visit, because a woken service stays up for about 15 minutes
-  anyway.
-- **Only configured URLs are pinged.** The list lives in server config; the
-  request can't add to it.
-- **It spends free hours.** Each round keeps the three services up for about
-  15 minutes (about 0.75 instance-hours). With Unkerb always awake using
-  about 730 of the 750 free hours, that leaves room for roughly 25 rounds a
-  month. Past that, Render suspends all the workspace's free services until
-  the 1st. To turn it off, set `WAKE_URLS` to an empty string.
+1. Set `WAKE_URLS` in `render.yaml` to the URLs to wake, comma-separated.
+   When a visitor opens Unkerb in a browser, the page calls `POST /api/wake`
+   and the server pings them, at most once every 15 minutes
+   (`WAKE_INTERVAL_SECONDS`). Only these configured URLs are ever pinged,
+   and the keep-awake ping (which calls `/api/health`) never triggers it.
+2. Add back a scheduled workflow that pings
+   `https://unkerb.onrender.com/api/health` every 14 minutes (see git
+   history for `.github/workflows/keep-awake.yml`), and remove Atlas's.
+
+Each wake round keeps the woken services up for about 15 minutes (about
+0.25 instance-hours each). With one service always awake, only about 20
+free hours remain for everything else.
 
 ## How the image is tested
 

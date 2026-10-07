@@ -22,10 +22,13 @@ services:
       # One headless browser at a time keeps a scan inside 512 MB.
       - key: MAX_CONCURRENT_SCANS
         value: "1"
-      # When a real visitor opens Unkerb, wake these sleeping free services
-      # (at most once per 15 minutes). See backend/app/wake.py.
+      # Off: Atlas's website is now the always-awake service on this Render
+      # workspace and wakes the others (including Unkerb) when visited. To
+      # make Unkerb the hub again, list the URLs to wake here (comma-
+      # separated) and restore the keep-awake workflow. See
+      # backend/app/wake.py and DEPLOYMENT.md.
       - key: WAKE_URLS
-        value: "https://atlas-web-smkl.onrender.com/,https://atlas-api-g79j.onrender.com/healthz,https://leadscout-k7q2.onrender.com/api/health"
+        value: ""
       # Never add ALLOW_PRIVATE_NETWORKS here: it turns off the protection
       # against scanning internal addresses. The app defaults it to false.
       - key: ANTHROPIC_API_KEY
