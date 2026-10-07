@@ -23,6 +23,12 @@ export async function runScan(url: string, anthropicApiKey?: string): Promise<Sc
   return res.json();
 }
 
+/** Tell the server a real visitor opened the page, so it can wake the
+ * owner's other sleeping sites. Fire-and-forget: failures don't matter. */
+export function wakeOtherSites(): void {
+  fetch(`${API_BASE_URL}/api/wake`, { method: "POST", keepalive: true }).catch(() => {});
+}
+
 export function markdownExportUrl(scanId: string): string {
   return `${API_BASE_URL}/api/scan/${scanId}/report.md`;
 }

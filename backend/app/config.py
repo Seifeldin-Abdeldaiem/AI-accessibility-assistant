@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     # backend serves the website too, so one service is the whole app.
     frontend_dir: str | None = None
 
+    # Other sites to wake when a real visitor opens Unkerb (comma-separated
+    # URLs; empty turns the feature off). See app/wake.py.
+    wake_urls: str = ""
+    wake_interval_seconds: int = 900
+
+    def wake_url_list(self) -> list[str]:
+        return [u.strip() for u in self.wake_urls.split(",") if u.strip()]
+
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 

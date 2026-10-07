@@ -68,6 +68,27 @@ site calls its own API on whatever address it is served from.
 - For always-on without pinging (and much faster scans), change
   `plan: free` to `plan: starter` in `render.yaml`.
 
+### Waking the other sites when someone opens Unkerb
+
+When a visitor opens Unkerb in a browser, the page calls `POST /api/wake`
+and the server pings every URL in `WAKE_URLS` (set in `render.yaml`) so
+those sleeping free services start booting. Currently that's Atlas's website
+and API and LeadScout.
+
+- **Only real visitors trigger it.** The keep-awake workflow calls
+  `/api/health` and never loads the page, and bots that don't run
+  JavaScript never reach the call.
+- **At most one round every 15 minutes** (`WAKE_INTERVAL_SECONDS`), however
+  many people visit, because a woken service stays up for about 15 minutes
+  anyway.
+- **Only configured URLs are pinged.** The list lives in server config; the
+  request can't add to it.
+- **It spends free hours.** Each round keeps the three services up for about
+  15 minutes (about 0.75 instance-hours). With Unkerb always awake using
+  about 730 of the 750 free hours, that leaves room for roughly 25 rounds a
+  month. Past that, Render suspends all the workspace's free services until
+  the 1st. To turn it off, set `WAKE_URLS` to an empty string.
+
 ## How the image is tested
 
 `.github/workflows/docker.yml` runs on every push and pull request. It:
