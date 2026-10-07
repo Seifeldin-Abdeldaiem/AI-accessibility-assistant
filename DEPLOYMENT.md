@@ -55,8 +55,18 @@ site calls its own API on whatever address it is served from.
   below). `MAX_CONCURRENT_SCANS=1` makes scans queue instead of running two
   browsers at once.
 - The service **sleeps after about 15 minutes with no visitors**. The first
-  visit after that takes about a minute while it wakes up. For always-on,
-  change `plan: free` to `plan: starter` in `render.yaml`.
+  visit after that takes about a minute while it wakes up.
+  `.github/workflows/keep-awake.yml` pings `/api/health` every 5 minutes to
+  keep it awake. Change `SITE_URL` there if the service's address changes.
+- **Free hours are shared.** A Render workspace gets about 750 free instance
+  hours a month across all its free services, and an always-awake service
+  uses about 730 of them. If other free services in the same workspace also
+  stay busy, the workspace can run out before the month ends and Render
+  suspends its free services until the next month. Watch the usage under
+  **Billing** in Render; to stop pinging, disable the workflow in the
+  repository's **Actions** tab.
+- For always-on without pinging (and much faster scans), change
+  `plan: free` to `plan: starter` in `render.yaml`.
 
 ## How the image is tested
 
